@@ -1,0 +1,22 @@
+//help from https://stackoverflow.com/a/61467483
+{
+	"compilerOptions": {
+		"target": "es6",
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"strict": true,
+		"outDir": ".",
+		"baseUrl": "./"
+	},
+	"references": [
+		{
+			"path": "./types-lib"
+		},
+		{
+			"path": "./cache-controller"
+		},
+		{
+			"path": "./cache-test"
+		}
+	]
+}

@@ -1,0 +1,11 @@
+{
+	"name": "vrc-helpers",
+	"version": "0.1.0",
+	"scripts": {
+		"cache-test": "npx tsc -b && node dist/cache-test/index.js"
+	},
+	"devDependencies": {
+		"@types/node": "22.13.1",
+		"typescript": "5.7.3"
+	}
+}
