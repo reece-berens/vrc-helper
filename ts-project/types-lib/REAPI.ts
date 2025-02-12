@@ -1,40 +1,267 @@
 export namespace REAPI {
 	export namespace API {
-		interface Base {
+		interface EventID_Required {
+			EventID: number;
+		}
+
+		interface EventID_DivisionID_Required extends EventID_Required {
+			DivisionID: number;
+		}
+
+		interface TeamID_Required {
+			TeamID: number;
+		}
+
+		interface ResponseBase {
 			meta: Objects.PageMeta;
 			data: any[];
 		}
 
-		export interface Award extends Base {
-			data: Objects.Award[];
+		export namespace Event {
+			export namespace List {
+				interface _Request {
+					ID: number[];
+					SKU: string[];
+					TeamID: number[];
+					SeasonID: number[];
+					Start: Date;
+					End: Date;
+					Region: string;
+					Level: REAPI.Objects.EventLevel[];
+					Type: REAPI.Objects.EventType[];
+				}
+				export type Request = Partial<_Request>;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Event[];
+				};
+			}
+
+			export namespace Single {
+				export type Request = EventID_Required;
+
+				export type Response = Objects.Event;
+			}
+
+			export namespace TeamsAtEvent {
+				interface _Request {
+					TeamNumber: string[];
+					TeamRegistered: boolean;
+					TeamGrade: REAPI.Objects.Grade[];
+					TeamCountry: string[];
+				}
+				export type Request = Partial<_Request> & EventID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Team[];
+				};
+			}
+
+			export namespace Skills {
+				interface _Request {
+					TeamID: number[];
+					SkillsType: REAPI.Objects.SkillType[];
+				}
+				export type Request = Partial<_Request> & EventID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Skill[];
+				}
+			}
+
+			export namespace Awards {
+				interface _Request {
+					TeamID: number[];
+				}
+				export type Request = Partial<_Request> & EventID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Award[];
+				}
+			}
+
+			export namespace DivisionMatches {
+				interface _Request {
+					TeamID : number[];
+					Round: REAPI.Objects.MatchRound[];
+				}
+				export type Request = Partial<_Request> & EventID_DivisionID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.MatchObj[];
+				}
+			}
+
+			export namespace DivisionFinalistRankings {
+				interface _Request {
+					TeamID: number[];
+					Rank: number[];
+				}
+				export type Request = Partial<_Request> & EventID_DivisionID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Ranking[];
+				}
+			}
+
+			export namespace DivisionRanking {
+				interface _Request {
+					TeamID: number[];
+					Rank: number[];
+				}
+				export type Request = Partial<_Request> & EventID_DivisionID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Ranking[];
+				}
+			}
 		}
 
-		export interface Event extends Base {
-			data: Objects.Event[];
+		export namespace Program {
+			export namespace Single {
+				export interface Request {
+					ProgramID: number;
+				}
+
+				export type Response = Objects.Program;
+			}
+
+			export namespace List {
+				export interface Request {
+					ProgramID: number[];
+				}
+
+				export interface Response extends ResponseBase {
+					data: Objects.Program[];
+				}
+			}
 		}
 
-		export interface Match extends Base {
-			data: Objects.MatchObj[];
+		export namespace Team {
+			export namespace List {
+				interface _Request {
+					TeamID: number[];
+					TeamNumber: string[];
+					AttendedEventID: number[];
+					Registered: boolean;
+					ProgramID: number[];
+					Grade: Objects.Grade[];
+					Country: string[];
+				}
+				export type Request = Partial<_Request>;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Team[];
+				};
+			}
+
+			export namespace Single {
+				export type Request = TeamID_Required;
+
+				export type Response = Objects.Team;
+			}
+
+			export namespace Events {
+				interface _Request {
+					EventSKU: string[];
+					SeasonID: number[];
+					Start: Date;
+					End: Date;
+					Level: Objects.EventLevel[];
+				}
+				export type Request = Partial<_Request> & TeamID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Event[];
+				}
+			}
+
+			export namespace Matches {
+				interface _Request {
+					EventID: number[];
+					SeasonID: number[];
+					Round: Objects.MatchRound[];
+				}
+				export type Request = Partial<_Request> & TeamID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.MatchObj[];
+				}
+			}
+
+			export namespace Rankings {
+				interface _Request {
+					EventID: number[];
+					Rank: number[];
+					SeasonID: number[];
+				}
+				export type Request = Partial<_Request> & TeamID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Ranking[];
+				}
+			}
+
+			export namespace Skills {
+				interface _Request {
+					EventID: number[];
+					Type: Objects.SkillType[];
+					SeasonID: number[];
+				}
+				export type Request = Partial<_Request> & TeamID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Skill[];
+				}
+			}
+
+			export namespace Awards {
+				interface _Request {
+					EventID: number[];
+					SeasonID: number[];
+				}
+				export type Request = Partial<_Request> & TeamID_Required;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Award[];
+				}
+			}
 		}
 
-		export interface Program extends Base {
-			data: Objects.Program[];
-		}
+		export namespace Season {
+			interface _Season_Single {
+				SeasonID: number;
+			}
+			export namespace Single {
+				export type Request = _Season_Single;
 
-		export interface Season extends Base {
-			data: Objects.Season[];
-		}
+				export type Response = Objects.Season;
+			}
 
-		export interface Ranking extends Base {
-			data: Objects.Ranking[];
-		}
+			export namespace List {
+				export interface Request {
+					SeasonID: number[];
+				}
 
-		export interface Skill extends Base {
-			data: Objects.Skill[];
-		}
+				export interface Response extends ResponseBase {
+					data: Objects.Season[];
+				}
+			}
 
-		export interface Team extends Base {
-			data: Objects.Team[];
+			export namespace Events {
+				interface _Request {
+					EventSKU: string[];
+					ParticipatingTeamID: number[];
+					Start: Date;
+					End: Date;
+					Level: REAPI.Objects.EventLevel[];
+				}
+				export type Season_Events = Partial<_Request> & _Season_Single;
+
+				export interface Response extends ResponseBase {
+					data: Objects.Event[];
+				}
+			}
 		}
 	}
 	export namespace Objects {
@@ -134,6 +361,18 @@ export namespace REAPI {
 			scored: true;
 			name: string;
 			alliances: Alliance[];
+		}
+
+		export enum MatchRound {
+			Practice = 1,
+			Qualification = 2,
+			QuarterFinal = 3,
+			SemiFinal = 4,
+			Final = 5,
+			Round16 = 6,
+			Round32 = 7,
+			Round64 = 8,
+			Round128 = 9
 		}
 
 		export interface PageMeta {
