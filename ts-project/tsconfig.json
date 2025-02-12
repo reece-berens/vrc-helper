@@ -17,6 +17,12 @@
 		},
 		{
 			"path": "./cache-test"
+		},
+		{
+			"path": "./re-api"
+		},
+		{
+			"path": "./re-api-test"
 		}
 	]
 }

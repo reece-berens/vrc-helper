@@ -12,9 +12,14 @@ export namespace REAPI {
 			TeamID: number;
 		}
 
-		interface ResponseBase {
+		export interface ResponseBase {
 			meta: Objects.PageMeta;
 			data: any[];
+		}
+
+		export interface Error {
+			code: number;
+			message: string;
 		}
 
 		export namespace Event {
@@ -127,9 +132,10 @@ export namespace REAPI {
 			}
 
 			export namespace List {
-				export interface Request {
+				interface _Request {
 					ProgramID: number[];
 				}
+				export type Request = Partial<_Request>;
 
 				export interface Response extends ResponseBase {
 					data: Objects.Program[];
@@ -239,9 +245,11 @@ export namespace REAPI {
 			}
 
 			export namespace List {
-				export interface Request {
+				interface _Request {
 					SeasonID: number[];
+					ProgramID: number[];
 				}
+				export type Request = Partial<_Request>;
 
 				export interface Response extends ResponseBase {
 					data: Objects.Season[];
@@ -256,7 +264,7 @@ export namespace REAPI {
 					End: Date;
 					Level: REAPI.Objects.EventLevel[];
 				}
-				export type Season_Events = Partial<_Request> & _Season_Single;
+				export type Request = Partial<_Request> & _Season_Single;
 
 				export interface Response extends ResponseBase {
 					data: Objects.Event[];
@@ -297,11 +305,6 @@ export namespace REAPI {
 			id: number;
 			name: string;
 			order: number;
-		}
-
-		export interface Error {
-			code: number;
-			message: string;
 		}
 		
 		export interface Event {

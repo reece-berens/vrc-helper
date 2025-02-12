@@ -2,7 +2,8 @@
 	"name": "vrc-helpers",
 	"version": "0.1.0",
 	"scripts": {
-		"cache-test": "npx tsc -b && node dist/cache-test/index.js"
+		"cache-test": "npx tsc -b && node dist/cache-test/index.js",
+		"re-api-test": "npx tsc -b && node --env-file=.env dist/re-api-test/index.js"
 	},
 	"devDependencies": {
 		"@types/node": "22.13.1",

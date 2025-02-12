@@ -1,7 +1,7 @@
 import {REAPI, RECache} from "../types-lib";
+import API from "../re-api";
 
 export default class CacheController {
-	private baseURL: string = "https://robotevents.com/api/v2";
 	private cache: RECache;
 
 	constructor() {
