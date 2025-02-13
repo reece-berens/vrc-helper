@@ -3,7 +3,14 @@ import { REAPI } from "../types-lib";
 const baseURL = process.env.RE_BASE_URL || "https://www.robotevents.com/api/v2";
 const bearerToken = process.env.RE_BEARER_TOKEN;
 
+//https://stackoverflow.com/a/33292942
+async function Timeout(ms: number): Promise<void> {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function GetRequest<T>(url: URL): Promise<T | REAPI.API.Error> {
+	await Timeout(1500); //being a good steward of the API and not making requests one right after the other
+	console.log(`New Request in API - ${url}`);
 	const request = new Request(url, {
 		method: "GET",
 		headers: {
@@ -86,12 +93,12 @@ export const Event_List = async (param: REAPI.API.Event.List.Request | null, url
 	return returnVal;
 }
 
-export const Event_Single = async (param: REAPI.API.Event.Single.Request | null, urlOverride?: string): Promise<REAPI.API.Event.Single.Response | REAPI.API.Error> => {
+export const Event_Single = async (param: REAPI.API.Event.Single.Request): Promise<REAPI.API.Event.Single.Response | REAPI.API.Error> => {
 	const requestPopulator = (param: REAPI.API.Event.Single.Request | null, url: URL) => {
 		
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Event.Single.Request, REAPI.API.Event.Single.Response>(`/events/${param?.EventID}`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Event.Single.Request, REAPI.API.Event.Single.Response>(`/events/${param?.EventID}`, param, requestPopulator);
 	return returnVal;
 }
 
@@ -142,7 +149,7 @@ export const Event_Division_Matches = async (param: REAPI.API.Event.DivisionMatc
 		}
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Event.DivisionMatches.Request, REAPI.API.Event.DivisionMatches.Response>(`/events/${param?.EventID}/matches`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Event.DivisionMatches.Request, REAPI.API.Event.DivisionMatches.Response>(`/events/${param?.EventID}/divisions/${param?.DivisionID}/matches`, param, requestPopulator, urlOverride);
 	return returnVal;
 }
 
@@ -154,7 +161,7 @@ export const Event_Division_FinalistRankings = async (param: REAPI.API.Event.Div
 		}
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Event.DivisionFinalistRankings.Request, REAPI.API.Event.DivisionFinalistRankings.Response>(`/events/${param?.EventID}/finalistRankings`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Event.DivisionFinalistRankings.Request, REAPI.API.Event.DivisionFinalistRankings.Response>(`/events/${param?.EventID}/divisions/${param?.DivisionID}/finalistRankings`, param, requestPopulator, urlOverride);
 	return returnVal;
 }
 
@@ -166,7 +173,7 @@ export const Event_Division_Rankings = async (param: REAPI.API.Event.DivisionRan
 		}
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Event.DivisionRanking.Request, REAPI.API.Event.DivisionRanking.Response>(`/events/${param?.EventID}/rankings`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Event.DivisionRanking.Request, REAPI.API.Event.DivisionRanking.Response>(`/events/${param?.EventID}/divisions/${param?.DivisionID}/rankings`, param, requestPopulator, urlOverride);
 	return returnVal;
 }
 
@@ -193,12 +200,12 @@ export const Team_List = async (param: REAPI.API.Team.List.Request | null, urlOv
 	return returnVal;
 }
 
-export const Team_Single = async (param: REAPI.API.Team.Single.Request | null, urlOverride?: string): Promise<REAPI.API.Team.Single.Response | REAPI.API.Error> => {
+export const Team_Single = async (param: REAPI.API.Team.Single.Request): Promise<REAPI.API.Team.Single.Response | REAPI.API.Error> => {
 	const requestPopulator = (param: REAPI.API.Team.Single.Request | null, url: URL) => {
 		
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Team.Single.Request, REAPI.API.Team.Single.Response>(`/teams${param?.TeamID}`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Team.Single.Request, REAPI.API.Team.Single.Response>(`/teams${param?.TeamID}`, param, requestPopulator);
 	return returnVal;
 }
 
@@ -279,7 +286,7 @@ export const Team_Awards = async (param: REAPI.API.Team.Awards.Request | null, u
 export const Program_List = async (param: REAPI.API.Program.List.Request | null, urlOverride?: string): Promise<REAPI.API.Program.List.Response | REAPI.API.Error> => {
 	const requestPopulator = (param: REAPI.API.Program.List.Request | null, url: URL) => {
 		if (param !== null) {
-			param.ProgramID?.forEach(x => url.searchParams.append("program", x.toString()));
+			param.ProgramID?.forEach(x => url.searchParams.append("id", x.toString()));
 		}
 	}
 
@@ -303,8 +310,11 @@ export const Program_Single = async (param: REAPI.API.Program.Single.Request | n
 export const Season_List = async (param: REAPI.API.Season.List.Request | null, urlOverride?: string): Promise<REAPI.API.Season.List.Response | REAPI.API.Error> => {
 	const requestPopulator = (param: REAPI.API.Season.List.Request | null, url: URL) => {
 		if (param !== null) {
-			param.SeasonID?.forEach(x => url.searchParams.append("season", x.toString()));
+			param.SeasonID?.forEach(x => url.searchParams.append("id", x.toString()));
 			param.ProgramID?.forEach(x => url.searchParams.append("program", x.toString()));
+			if (typeof param.ActiveSeason === "boolean") {
+				url.searchParams.append("active", param.ActiveSeason ? "true" : "false");
+			}
 		}
 	}
 

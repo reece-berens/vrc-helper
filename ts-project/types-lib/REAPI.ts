@@ -248,6 +248,7 @@ export namespace REAPI {
 				interface _Request {
 					SeasonID: number[];
 					ProgramID: number[];
+					ActiveSeason: boolean;
 				}
 				export type Request = Partial<_Request>;
 
@@ -317,7 +318,7 @@ export namespace REAPI {
 			program: IdInfo;
 			location: Location;
 			locations: Locations;
-			division: Division[];
+			divisions: Division[];
 			level: EventLevel;
 			ongoing: boolean;
 			awards_finalized: boolean;
@@ -383,8 +384,8 @@ export namespace REAPI {
 			first_page_url: string;
 			from: number;
 			last_page: number;
-			last_page_url: number;
-			next_page_url: number;
+			last_page_url: string;
+			next_page_url: string;
 			path: string;
 			per_page: number;
 			prev_page_url: string;

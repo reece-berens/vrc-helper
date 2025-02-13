@@ -3,7 +3,5 @@ import { RECache } from "../types-lib";
 
 const cache = new CacheController();
 
-const cacheCopyThing: RECache = cache.ReturnCache();
-
-console.log(cacheCopyThing.Programs.length);
+//any cache tests can go in here - probably don't commit them to the repo since it'll get large and messy
 
