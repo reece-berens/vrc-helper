@@ -1,7 +1,7 @@
 //help from https://stackoverflow.com/a/61467483
 {
 	"compilerOptions": {
-		"target": "es6",
+		"target": "ES6",
 		"module": "CommonJS",
 		"moduleResolution": "node",
 		"strict": true,
