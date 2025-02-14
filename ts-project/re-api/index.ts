@@ -205,7 +205,7 @@ export const Team_Single = async (param: REAPI.API.Team.Single.Request): Promise
 		
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Team.Single.Request, REAPI.API.Team.Single.Response>(`/teams${param?.TeamID}`, param, requestPopulator);
+	const returnVal = await DoLogic<REAPI.API.Team.Single.Request, REAPI.API.Team.Single.Response>(`/teams/${param?.TeamID}`, param, requestPopulator);
 	return returnVal;
 }
 

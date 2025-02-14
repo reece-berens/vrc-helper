@@ -98,18 +98,53 @@ export default class CacheController {
 		while (API.ValidResponse<REAPI.API.Event.Skills.Response>(skillsResponse)) {
 			//skills results get converted to a smaller type
 			
-			skillsResponse.data.forEach(x => {
+			for (let skillsRun of skillsResponse.data) {
 				//convert data to smaller format
 				let cacheSkills: EC_TR_SkillsResult = {
-					id: x.id,
-					type: x.type,
-					rank: x.rank,
-					score: x.score,
-					attempts: x.attempts
+					id: skillsRun.id,
+					type: skillsRun.type,
+					rank: skillsRun.rank,
+					score: skillsRun.score,
+					attempts: skillsRun.attempts
 				};
 				//smaller skills results go in the TeamResults object (already initialized when loading event)
-				eventObj.TeamResults[x.team.id].SkillsResults.push(cacheSkills);
-			});
+				if (typeof eventObj.TeamResults[skillsRun.team.id] === "undefined") {
+					//Event RE-V5RC-24-6979 has a team that logged a skills run without being a registered team, so add them if needed
+					//in this case, they would not show up in the TeamResults object, so add them like we do above (also ensure team is populated in top level cache)
+					console.warn(`WARN CacheController.LoadEventCacheObject - Team has skills runs but is not registered at tournament - ${skillsRun.team.id} ${skillsRun.team.name}`);
+					if (typeof this.cache.Teams[seasonObj.id][skillsRun.team.id] === "undefined") {
+						//team hasn't been added to top level cache, so get them from RE
+						const teamRequest: REAPI.API.Team.Single.Request = {
+							TeamID: skillsRun.team.id
+						};
+						const teamResponse = await API.Team.Single(teamRequest);
+						if (API.ValidResponse<REAPI.API.Team.Single.Response>(teamResponse)) {
+							this.cache.Teams[seasonObj.id][skillsRun.team.id] = teamResponse;
+						}
+						else {
+							console.error(`ERROR CacheController.LoadEventCacheObject - Team has skills runs but is not registered at tournament - COULD NOT BE LOADED FROM RE - ${skillsRun.team.id} ${skillsRun.team.name}`);
+							continue;
+						}
+					}
+					var teamFromRE = this.cache.Teams[seasonObj.id][skillsRun.team.id];
+					if (typeof this.cache.TeamReverseLookup[seasonObj.id] === "undefined") {
+						this.cache.TeamReverseLookup[seasonObj.id] = {};
+					}
+					if (typeof this.cache.TeamReverseLookup[seasonObj.id][teamFromRE.number] === "undefined") {
+						this.cache.TeamReverseLookup[seasonObj.id][teamFromRE.number] = teamFromRE.id;
+					}
+					//add the team to the event cache object, populate the data elements later
+					eventObj.TeamResults[skillsRun.team.id] = {
+						EliminationPartner: null,
+						FinalistRanking: null,
+						EliminationResults: null,
+						QualiRanking: {...this._defaultEC_TR_Ranking, division: {...this._defaultEC_TR_Ranking.division}},
+						QualiResults: [],
+						SkillsResults: []
+					}
+				}
+				eventObj.TeamResults[skillsRun.team.id].SkillsResults.push(cacheSkills);
+			}
 
 			if (skillsResponse.meta.next_page_url === null) {
 				//no more pages of data to load, break out of loop
