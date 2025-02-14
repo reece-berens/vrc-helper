@@ -7,6 +7,11 @@
 		"ui-dev": "npx tsc -b && cd ./ui-site && next dev -p 4101"
 	},
 	"dependencies": {
+		"@emotion/react": "11.14.0",
+		"@emotion/styled": "11.14.0",
+		"@fontsource/roboto": "5.1.1",
+		"@mui/icons-material": "6.4.4",
+		"@mui/material": "6.4.4",
 		"next": "15.1.7",
 		"react": "19.0.0",
 		"react-dom": "19.0.0"
