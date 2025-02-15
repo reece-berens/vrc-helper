@@ -19,6 +19,9 @@
 			"path": "./cache-test"
 		},
 		{
+			"path": "./express-api"
+		},
+		{
 			"path": "./re-api"
 		},
 		{

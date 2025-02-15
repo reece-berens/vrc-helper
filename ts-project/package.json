@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"scripts": {
 		"cache-test": "npx tsc -b && node --env-file=.env dist/cache-test/index.js",
+		"express-api": "npx tsc -b && node --env-file=.env dist/express-api/index.js",
 		"re-api-test": "npx tsc -b && node --env-file=.env dist/re-api-test/index.js",
 		"ui-dev": "npx tsc -b && cd ./ui-site && next dev -p 4101"
 	},
@@ -12,12 +13,16 @@
 		"@fontsource/roboto": "5.1.1",
 		"@mui/icons-material": "6.4.4",
 		"@mui/material": "6.4.4",
+		"cors": "2.8.5",
+		"express": "4.21.2",
 		"next": "15.1.7",
 		"react": "19.0.0",
 		"react-dom": "19.0.0"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "3.2.0",
+		"@types/cors": "2.8.17",
+		"@types/express": "5.0.0",
 		"@types/node": "22.13.1",
 		"@types/react": "19.0.8",
 		"@types/react-dom": "19.0.3",
