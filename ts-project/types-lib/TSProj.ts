@@ -4,7 +4,7 @@ import { RECache } from "./RECache";
 
 export namespace TSProj {
 	export namespace EnhancedEmcee {
-		export namespace Region {
+		export namespace ProgramSeasonRegion {
 			export type DataResponse = HeaderItem[];
 
 			export interface DropdownResponse {

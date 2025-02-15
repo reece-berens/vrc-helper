@@ -1,5 +1,5 @@
 "use client";
-import {Fragment, useEffect, useState} from "react";
+import {Dispatch, Fragment, SetStateAction, useEffect, useState} from "react";
 import {TSProj} from "../../../../types-lib";
 
 import Accordion from "@mui/material/Accordion";
@@ -12,121 +12,140 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 
-const tempProgram: TSProj.EnhancedEmcee.Region.DropdownResponse = {
-	data: [
-		{code: "1", display: "V5RC"}
-	],
-	defaultCode: "1"
-};
-
-const tempSeason: TSProj.EnhancedEmcee.Region.DropdownResponse = {
-	data: [
-		{code: "190", display: "VEX High Stakes"}
-	],
-	defaultCode: null
-};
-
-const tempRegion: TSProj.EnhancedEmcee.Region.DropdownResponse = {
-	data: [
-		{code: "Kansas", display: "Kansas"},
-		{code: "Misery", display: "Misery"}
-	],
-	defaultCode: "Kansas"
-};
-
-const tempDisplay: TSProj.EnhancedEmcee.Region.DataResponse = [
-	{
-		name: "Overall Statistics",
-		order: 1,
-		data: [
-			{label: "Total Matches", value: ["100 total", "80 Qualifications", "20 Eliminations"]},
-			{label: "Total Points Scored", value: ["1k total", "800 HS", "200 MS"]},
-			{label: "Registered Teams", value: ["80 HS", "20 MS"]},
-			{label: "Autonomous Points Scored", value: ["13 HS-only meets", "32 MS-only meets", "12 Blended"]},
-		]
-	},
-	{
-		name: "Highest-Performing Teams",
-		order: 2,
-		data: [
-			{label: "Highest Score", value: ["50", "7862D & 7862U", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest PPG", value: ["15.34", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Driver Skills", value: ["66666666", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Score", value: ["50", "7862D & 7862U this is testing a super long value to see how well data wraps when it may get too long to fit on a single line of text - maybe the event name decided to get real fancy-like, maybe one team has a lot of data that they want to share, who knows, anything can happen at vex tournaments", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Score", value: ["50", "7862D & 7862U", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest PPG", value: ["15.34", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Driver Skills", value: ["66666666", "15352A", "Basehor Tournament", "January 25, 2025"]},
-		]
-	},
-	{
-		name: "Other Data Set",
-		order: 3,
-		data: [
-			{label: "Highest Score", value: ["50", "7862D & 7862U", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest PPG", value: ["15.34", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Driver Skills", value: ["66666666", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Score", value: ["50", "7862D & 7862U", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest PPG", value: ["15.34", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Driver Skills", value: ["66666666", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Score", value: ["50", "7862D & 7862U", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest PPG", value: ["15.34", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Driver Skills", value: ["66666666", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Score", value: ["50", "7862D & 7862U", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest PPG", value: ["15.34", "15352A", "Basehor Tournament", "January 25, 2025"]},
-			{label: "Highest Driver Skills", value: ["66666666", "15352A", "Basehor Tournament", "January 25, 2025"]},
-		]
-	}
-]
+const baseAPI = process.env.NEXT_PUBLIC_API_URL || "";
+const apiUsername = process.env.NEXT_PUBLIC_API_USERNAME || "";
+const apiPassword = process.env.NEXT_PUBLIC_API_PASSWORD || "";
 
 const EnhancedEmcee_Region: React.FC<{}> = () => {
 	const [currentProgram, _currentProgram] = useState<string>("");
 	const [currentSeason, _currentSeason] = useState<string>("");
 	const [currentRegion, _currentRegion] = useState<string>("");
 
-	const [programList, _programList] = useState<TSProj.EnhancedEmcee.Region.DropdownItem[]>([]);
-	const [seasonList, _seasonList] = useState<TSProj.EnhancedEmcee.Region.DropdownItem[]>([]);
-	const [regionList, _regionList] = useState<TSProj.EnhancedEmcee.Region.DropdownItem[]>([]);
+	const [programList, _programList] = useState<TSProj.EnhancedEmcee.ProgramSeasonRegion.DropdownItem[]>([]);
+	const [seasonList, _seasonList] = useState<TSProj.EnhancedEmcee.ProgramSeasonRegion.DropdownItem[]>([]);
+	const [regionList, _regionList] = useState<TSProj.EnhancedEmcee.ProgramSeasonRegion.DropdownItem[]>([]);
 
-	const [displayData, _displayData] = useState<TSProj.EnhancedEmcee.Region.DataResponse>([]);
+	const [displayData, _displayData] = useState<TSProj.EnhancedEmcee.ProgramSeasonRegion.DataResponse>([]);
 
 	const [openAccordion, _openAccordion] = useState<string>("_filter"); //default for showing filter on phones
 
+	const LoadDropdownList = (url: URL, updateList: Dispatch<SetStateAction<TSProj.EnhancedEmcee.ProgramSeasonRegion.DropdownItem[]>>, updateSelected: Dispatch<SetStateAction<string>>) => {
+		const request: Request = new Request(url);
+		if (apiUsername !== "" && apiPassword !== "") {
+			request.headers.append("Authorization", "Basic " + btoa(`${apiUsername}:${apiPassword}`));
+		}
+		fetch(request).then(data => {
+			if (data.status === 200) {
+				data.json().then((respObj: TSProj.EnhancedEmcee.ProgramSeasonRegion.DropdownResponse) => {
+					updateList(respObj.data);
+					if (respObj.defaultCode !== null) {
+						updateSelected(respObj.defaultCode);
+					}
+				});
+			}
+			else {
+				data.text().then(dataText => {
+					console.error(`ERROR invalid response when getting list of data - ${data.status}`, dataText);
+				}).catch(e => {
+					console.error(`ERROR exception reading body of response when an error occurred ${data.status}`);
+				});
+			}
+		}).catch(error => {
+			console.error(`ERROR exception getting list of data`, error)
+		});
+	}
+
 	useEffect(() => {
 		//load the list of programs - when returned, set currentProgram to defaultCode if present
-		console.log("loading list of programs");
-		setTimeout(() => {
-			_programList(tempProgram.data);
-			if (tempProgram.defaultCode !== null) {
-				_currentProgram(tempProgram.defaultCode);
-			}
-		}, 3000);
+		console.log("Loading Program List");
+		//when the list of programs changes, reset selected season and region
+		if (baseAPI === "") {
+			//invalid configuration
+			console.error(`No valid Base API environment variable is present - cannot load programs`);
+		}
+		else {
+			const url: URL = new URL("/enhanced-emcee/psr/dd/programs", baseAPI);
+			LoadDropdownList(url, _programList, _currentProgram);
+		}
 	}, []);
 
 	useEffect(() => {
 		//load the list of seasons filtered by the selected program - when returned, set currentSeason to defaultCode if present
-		setTimeout(() => {
-			_seasonList(tempSeason.data);
-			if (tempSeason.defaultCode !== null) {
-				_currentSeason(tempSeason.defaultCode);
+		_currentSeason("");
+		_seasonList([]);
+		if (currentProgram !== "") {
+			console.log("Loading Season List");
+			if (baseAPI === "") {
+				//invalid configuration
+				console.error(`No valid Base API environment variable is present - cannot load seasons`);
 			}
-		}, 3000);
+			else {
+				const url: URL = new URL("/enhanced-emcee/psr/dd/seasons", baseAPI);
+				url.searchParams.append("programID", currentProgram);
+				LoadDropdownList(url, _seasonList, _currentSeason);
+			}
+		}
 	}, [programList, currentProgram]);
 
 	useEffect(() => {
 		//load the list of regions filtered by the selected program - when returned, set currentRegion to defaultCode if present
-		setTimeout(() => {
-			_regionList(tempRegion.data);
-			if (tempRegion.defaultCode !== null) {
-				_currentRegion(tempRegion.defaultCode);
+		_currentRegion("");
+		_regionList([]);
+		if (currentProgram !== "" && currentSeason !== "") {
+			console.log("Loading Region List");
+			if (baseAPI === "") {
+				//invalid configuration
+				console.error(`No valid Base API environment variable is present - cannot load regions`);
 			}
-		}, 3000);
+			else {
+				const url: URL = new URL("/enhanced-emcee/psr/dd/regions", baseAPI);
+				url.searchParams.append("programID", currentProgram);
+				url.searchParams.append("seasonID", currentSeason);
+				LoadDropdownList(url, _regionList, _currentRegion);
+			}
+		}
 	}, [seasonList, currentSeason]);
 
 	useEffect(() => {
 		//load all data for the current region - put result in displayData
-		setTimeout(() => {
-			_displayData(tempDisplay);
-		}, 3000);
+		_displayData([]);
+		if (currentProgram !== "" && currentSeason !== "" && currentRegion !== "") {
+			console.log("Loading Display Data");
+			if (baseAPI === "") {
+				//invalid configuration
+				console.error(`No valid Base API environment variable is present - cannot load data`);
+			}
+			else {
+				const url: URL = new URL("/enhanced-emcee/psr/data", baseAPI);
+				url.searchParams.append("programID", currentProgram);
+				url.searchParams.append("seasonID", currentSeason);
+				url.searchParams.append("region", currentRegion);
+				const request: Request = new Request(url);
+				if (apiUsername !== "" && apiPassword !== "") {
+					request.headers.append("Authorization", "Basic " + btoa(`${apiUsername}:${apiPassword}`));
+				}
+				fetch(request).then(data => {
+					if (data.status === 200) {
+						data.json().then((respObj: TSProj.EnhancedEmcee.ProgramSeasonRegion.DataResponse) => {
+							respObj.sort((a, b) => a.order < b.order ? -1 : 1);
+							_displayData(respObj);
+							if (respObj.length > 0) {
+								_openAccordion(respObj[0].name);
+							}
+						});
+					}
+					else {
+						data.text().then(dataText => {
+							console.error(`ERROR invalid response when getting list of display data - ${data.status}`, dataText);
+						}).catch(e => {
+							console.error(`ERROR exception reading body of response when an error occurred ${data.status}`);
+						});
+					}
+				}).catch(error => {
+					console.error(`ERROR exception getting list of display data`, error)
+				});
+			}
+		}
 	}, [regionList, currentRegion]);
 
 	return (

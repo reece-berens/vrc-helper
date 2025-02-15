@@ -26,7 +26,6 @@ app.use(cors());
 app.use((request, response, next) => {
 	console.log(`New request to ${request.path}`);
 	const requestAuth = request.header("Authorization") || "";
-	console.log(requestAuth);
 	if (auth_b64 === "" || requestAuth === `Basic ${auth_b64}`) {
 		//if we don't have authorization turned on or the authorization values match, continue to the route
 		var newRequest = request as TSProj.Express.Request;
@@ -35,6 +34,7 @@ app.use((request, response, next) => {
 	}
 	else {
 		//failed authorization when enabled, set status code of Unauthorized and exit out
+		console.log(`failed request received - ${requestAuth}`);
 		response.status(401).send("Invalid Authorization header");
 	}
 });
