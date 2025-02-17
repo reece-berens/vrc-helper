@@ -4,22 +4,10 @@ import { RECache } from "./RECache";
 
 export namespace TSProj {
 	export namespace EnhancedEmcee {
-		export namespace ProgramSeasonRegion {
-			export type DataResponse = HeaderItem[];
-
-			export interface DropdownResponse {
-				data: DropdownItem[];
-				defaultCode: string | null;
-			}
-
+		export namespace Common {
 			export interface DisplayElement {
 				label: string;
 				value: string[];
-			}
-			
-			export interface DropdownItem {
-				code: string;
-				display: string;
 			}
 
 			export interface HeaderItem {
@@ -28,8 +16,29 @@ export namespace TSProj {
 				data: DisplayElement[];
 			}
 		}
-		export namespace Team {
+		
+		export namespace ProgramSeasonRegion {
+			export type DataResponse = Common.HeaderItem[];
 
+			export interface DropdownResponse {
+				data: DropdownItem[];
+				defaultCode: string | null;
+			}
+
+			export interface DropdownItem {
+				code: string;
+				display: string;
+			}
+		}
+		export namespace MatchTeams {
+			export interface DataResponse {
+				//dictionary key is team number (12345Z)
+				[key: string]: {
+					HeaderLine: string;
+					SubHeaderLine: string;
+					DataHeaders: Common.HeaderItem[];
+				}
+			}
 		}
 	}
 	export namespace Express {

@@ -67,8 +67,8 @@ const CacheBearerToken = async (): Promise<void> => {
 console.log("starting to try and read cache");
 try {
 	const tokenCacheContents = fs.readFileSync(authCacheFileName, {encoding: "utf-8"});
-	TMAuthCache = JSON.parse(tokenCacheContents);
-	console.log("Found and read auth cache file");
+	TMAuthCache = JSON.parse(tokenCacheContents) as TSProj.Express.TM.Auth.Response;
+	TMAuthCache.ExpiresAt = new Date(TMAuthCache.ExpiresAt); //in the JSON parse the ExpiresAt property just comes across as a string, so need to define it as a Date
 }
 catch (tokenCacheError) {
 	console.log("TM Auth cache doesn't exist yet, get it now");
@@ -85,7 +85,7 @@ app.use(async (request, response, next) => {
 		//if we don't have authorization turned on or the authorization values match, continue to the route
 		var newRequest = request as TSProj.Express.Request;
 		newRequest._RE_Cache = reCache;
-
+		
 		if (TMAuthCache === null || new Date() > TMAuthCache.ExpiresAt) {
 			//cache has expired or doesn't exist, get a new one
 			console.log(`Getting a new cached bearer token from DWAB - ${new Date().toUTCString()}`);

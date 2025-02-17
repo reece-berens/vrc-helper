@@ -39,7 +39,7 @@ const tm_defaultMatchObject: TMAPI.Objects.Match.Object = {
 
 interface MatchDisplayInfo {
 	//key is going to be some combination of the TMAPI.Objects.Match.Tuple object
-	[key: string]: any
+	[key: string]: TSProj.EnhancedEmcee.MatchTeams.DataResponse
 }
 
 const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
@@ -67,7 +67,7 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 			tmAPI.GetMatchList({DivisionID: 1}).then(y => {
 				console.log("match list for division 1 below");
 				console.log(y);
-			})
+			});
 		});
 		
 		tmAPI.GetFieldSetList().then(x => {
@@ -101,7 +101,7 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 	useEffect(() => {
 		//if the matchDataCache object doesn't have the match data in it, call the API to load the data and store it in the cache
 		//call the express API for all data about each team on each alliance (/enhanced-emcee/mt?blue=4101K&blue=7862D&red=67101X&red=15352A or something like that)
-		//once that's loaded, populate all that data in the cache object
+		//once that's loaded, populate all that data in the cache object (maybe not do this part now until we can see how it may affect performance on mobile devices)
 
 		//also auto-set the teamTabSelected variable to the first team on the first alliance
 	}, [displayMatch]);
