@@ -1,5 +1,19 @@
 export namespace TMAPI {
+	export interface TokenResponse {
+		access_token: string;
+		expires_in: number;
+		token_type: string;
+	}
+
 	export namespace API {
+		export interface DataCache {
+			//dictionary key is the URL
+			[key: string]: {
+				Data: any;
+				LastModified: string;
+			}
+		}
+
 		export namespace Divisions {
 			export interface Response {
 				divisions: Objects.IDNamePair[];

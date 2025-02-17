@@ -12,6 +12,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 
+import useTMAPI from "../../helpers/useTMAPI_Hook";
+
 const baseExpressAPI = process.env.NEXT_PUBLIC_API_URL || "";
 const expressUsername = process.env.NEXT_PUBLIC_API_USERNAME || "";
 const expressPassword = process.env.NEXT_PUBLIC_API_PASSWORD || "";
@@ -41,6 +43,7 @@ interface MatchDisplayInfo {
 }
 
 const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
+	const tmAPI = useTMAPI();
 	const [tmDivisionList, _tmDivisionList] = useState<TMAPI.Objects.IDNamePair[]>([]);
 	const [tmMatchList, _tmMatchList] = useState<TMAPI.Objects.Match.Object[]>([]);
 	const [tmFieldSetList, _tmFieldSetList] = useState<TMAPI.Objects.IDNamePair[]>([]);
@@ -58,7 +61,26 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 
 	useEffect(() => {
 		//ensure TM credentials are valid
-
+		tmAPI.GetDivisionList().then(x => {
+			console.log("division list below");
+			console.log(x);
+			tmAPI.GetMatchList({DivisionID: 1}).then(y => {
+				console.log("match list for division 1 below");
+				console.log(y);
+			})
+		});
+		
+		tmAPI.GetFieldSetList().then(x => {
+			console.log("field set list below");
+			console.log(x);
+			
+			tmAPI.GetFieldList({FieldSetID: 1}).then(y => {
+				console.log("field list for field set id 1 below");
+				console.log(y);
+			});
+			
+		});
+		
 		//get list of divisions and field sets from TM
 	}, []);
 

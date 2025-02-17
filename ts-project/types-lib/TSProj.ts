@@ -35,7 +35,17 @@ export namespace TSProj {
 	export namespace Express {
 		interface _Request {
 			_RE_Cache: RECache;
+			_TM_Auth_Token: TM.Auth.Response;
 		}
 		export type Request = Express_Request & _Request;
+
+		export namespace TM {
+			export namespace Auth {
+				export interface Response {
+					AccessToken: string;
+					ExpiresAt: Date;
+				}
+			}
+		}
 	}
 }
