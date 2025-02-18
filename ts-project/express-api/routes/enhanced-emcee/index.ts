@@ -1,9 +1,11 @@
 import {Express} from "express";
-import RegionRoutes from "./PSR";
+import MatchTeamRoutes from "./match-teams";
+import PSRRoutes from "./PSR";
 
 //combine all enhanced-emcee routes into this one method below
 const BuildEnhancedEmceeRoutes = (app: Express): void => {
-	RegionRoutes(app);
+	MatchTeamRoutes(app);
+	PSRRoutes(app);
 };
 
 export default BuildEnhancedEmceeRoutes;
