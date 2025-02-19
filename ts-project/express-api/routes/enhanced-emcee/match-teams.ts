@@ -34,7 +34,7 @@ const BuildMatchTeamRoutes = (app: Express): void => {
 							if (curEvent.EventInfo.sku === eventSKU) {
 								//this is the event that we're looking for, so get the program/season
 								console.log("found the event in cache");
-								console.log(curEvent.EventInfo);
+								//console.log(curEvent.EventInfo);
 								programID = pKey;
 								seasonID = sKey;
 								region = rKey;
