@@ -58,14 +58,14 @@ const TabsStyling = styled(Tabs)({
 	}
 })
 
-const SelectedTabStyling = styled((props: SeletedTabStylingProps) => <Tab {...props} />)(({theme, ...other}) => {console.log("hello theme"); console.log(other); return ({
+const SelectedTabStyling = styled((props: SeletedTabStylingProps) => <Tab {...props} />)(({theme, ...other}) => ({
 	backgroundColor: other.color === "red" ? "#dc004e" : "#1976d2",
 	color: "white",
 	"&.Mui-selected": {
 		backgroundColor: "lightgray",
 		color: "black"
 	},
-})});
+}));
 
 const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 	const tmAPI = useTMAPI();
@@ -215,9 +215,6 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 			const curMatchTupleID = BuildMatchTupleIdentifier(displayMatch.matchInfo.matchTuple);
 			const curMatch = tmMatchList.findIndex(x => BuildMatchTupleIdentifier(x.matchInfo.matchTuple) === curMatchTupleID);
 			if (curMatch > -1 && curMatch < tmMatchList.length - 1) {
-				console.log("have a new display match to update");
-				console.log(curMatch);
-				console.log(tmMatchList.length)
 				_displayMatch(tmMatchList[curMatch + 1]);
 			}
 		}

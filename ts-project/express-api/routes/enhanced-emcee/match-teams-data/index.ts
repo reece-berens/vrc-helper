@@ -24,6 +24,11 @@ interface AlliancePairingResults {
 	WLT: WLT;
 }
 
+interface HeaderWithTourneyDate {
+	Header: TSProj.EnhancedEmcee.Common.HeaderItem;
+	TournamentDate: Date;
+}
+
 const GetMatchTeamData = (programID: number, seasonID: number, region: string | null, blue: string[], red: string[], cache: RECache): TSProj.EnhancedEmcee.MatchTeams.DataResponse => {
 	const response: TSProj.EnhancedEmcee.MatchTeams.DataResponse = {};
 	/*
@@ -184,6 +189,7 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 		let seasonElimWLT: WLT = {Win: 0, Loss: 0, Tie: 0};
 		let seasonWASP: WASP = {WP: 0, AP: 0, SP: 0};
 		let asColorWLT: WLT = {Win: 0, Loss: 0, Tie: 0};
+		let tournamentHeaderList: HeaderWithTourneyDate[] = [];
 		for (let regionKey of regionKeys) {
 			for (let cachedEvent of seasonEventDict[regionKey]) {
 				if (cachedEvent.EventInfo.awards_finalized && typeof cachedEvent.TeamResults[blueReverseLookup[bIndex]] !== "undefined") {
@@ -191,13 +197,14 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 					tournamentCount++;
 					const thisTeamResults = cachedEvent.TeamResults[blueReverseLookup[bIndex]];
 					let tourneyDate = new Date(cachedEvent.EventInfo.start);
+					tourneyDate.setHours(tourneyDate.getHours() + (tourneyDate.getTimezoneOffset() / 60));
 					const tournamentHeader = `${cachedEvent.EventInfo.name} (${tourneyDate.toLocaleDateString()})`;
 					const header_tournament: TSProj.EnhancedEmcee.Common.HeaderItem = {
 						name: tournamentHeader,
 						order: headerOrder++,
 						data: []
 					};
-					teamDataResponse.DataHeaders.push(header_tournament);
+					tournamentHeaderList.push({Header: header_tournament, TournamentDate: tourneyDate});
 
 					//#region Qualification Ranking Data
 
@@ -570,6 +577,8 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 				}
 			}
 		}
+		tournamentHeaderList.sort((a, b) => a.TournamentDate < b.TournamentDate ? -1 : 1);
+		teamDataResponse.DataHeaders.push(...tournamentHeaderList.map(x => x.Header));
 		
 		//we have gone through all matches that this team has been a part of, now build all the compiled stats
 		//#region Compiled Season Data
@@ -790,6 +799,7 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 		let seasonElimWLT: WLT = {Win: 0, Loss: 0, Tie: 0};
 		let seasonWASP: WASP = {WP: 0, AP: 0, SP: 0};
 		let asColorWLT: WLT = {Win: 0, Loss: 0, Tie: 0};
+		let tournamentHeaderList: HeaderWithTourneyDate[] = [];
 		for (let regionKey of regionKeys) {
 			for (let cachedEvent of seasonEventDict[regionKey]) {
 				if (cachedEvent.EventInfo.awards_finalized && typeof cachedEvent.TeamResults[redReverseLookup[rIndex]] !== "undefined") {
@@ -797,13 +807,14 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 					tournamentCount++;
 					const thisTeamResults = cachedEvent.TeamResults[redReverseLookup[rIndex]];
 					let tourneyDate = new Date(cachedEvent.EventInfo.start);
+					tourneyDate.setHours(tourneyDate.getHours() + (tourneyDate.getTimezoneOffset() / 60));
 					const tournamentHeader = `${cachedEvent.EventInfo.name} (${tourneyDate.toLocaleDateString()})`;
 					const header_tournament: TSProj.EnhancedEmcee.Common.HeaderItem = {
 						name: tournamentHeader,
 						order: headerOrder++,
 						data: []
 					};
-					teamDataResponse.DataHeaders.push(header_tournament);
+					tournamentHeaderList.push({Header: header_tournament, TournamentDate: tourneyDate});
 
 					//#region Qualification Ranking Data
 
@@ -1176,6 +1187,8 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 				}
 			}
 		}
+		tournamentHeaderList.sort((a, b) => a.TournamentDate < b.TournamentDate ? -1 : 1);
+		teamDataResponse.DataHeaders.push(...tournamentHeaderList.map(x => x.Header));
 		
 		//we have gone through all matches that this team has been a part of, now build all the compiled stats
 		//#region Compiled Season Data

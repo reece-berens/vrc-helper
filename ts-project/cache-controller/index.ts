@@ -420,6 +420,106 @@ export default class CacheController {
 		console.log(`CacheController.LoadEventByID - End - ${eventID}`);
 	}
 
+	//Call the RE API to get a single event by SKU
+	public async LoadEventBySKU(eventSKU: string, allowNonFinal?: boolean, forceRefresh?: boolean): Promise<void> {
+		console.log(`CacheController.LoadEventBySKU - Begin - ${eventSKU}`);
+		let addedEvent: boolean = false;
+		const request: REAPI.API.Event.List.Request = {
+			SKU: [eventSKU]
+		};
+		let thisResponse = await API.Event.List(request);
+		if (API.ValidResponse<REAPI.API.Event.List.Response>(thisResponse) && thisResponse.data.length > 0) {
+			//check if the season needs to be loaded into the cache
+			let event = thisResponse.data[0];
+			let cachedSeason = this.cache.Seasons.find(x => x.id === event.season.id);
+			if (typeof cachedSeason === "undefined") {
+				console.log(`CacheController.LoadEventBySKU - Loading Season`);
+				await this.LoadSeasonList([], [event.season.id]);
+				cachedSeason = this.cache.Seasons.find(x => x.id === event.season.id);
+				if (typeof cachedSeason === "undefined") {
+					//we tried to load the requested season from RE but it doesn't exist... return out of this method
+					console.warn("WARN CacheController.LoadEventBySKU - season tied to selected event doesn't exist in RE API");
+					return;
+				}
+			}
+			//load the program that this season belongs to if we don't have it already
+			let cachedProgram = this.cache.Programs.find(x => x.id === cachedSeason.program.id);
+			if (typeof cachedProgram === "undefined") {
+				console.log(`CacheController.LoadEventBySKU - Loading Program`);
+				await this.LoadProgramList([cachedSeason.program.id]);
+				cachedProgram = this.cache.Programs.find(x => x.id === cachedSeason.program.id);
+				if (typeof cachedProgram === "undefined") { 
+					//we tried to load the program tied to the season from RE but it doesn't exist... return out of this method
+					console.warn("WARN CacheController.LoadEventBySKU - program tied to season tied to selected event doesn't exist in RE API");
+					return;
+				}
+			}
+			
+			//set up the cache object for this request
+			if (typeof this.cache.Events[cachedProgram.id] === "undefined") {
+				this.cache.Events[cachedProgram.id] = {};
+				addedEvent = true;
+			}
+			if (typeof this.cache.Events[cachedProgram.id][cachedSeason.id] === "undefined") {
+				this.cache.Events[cachedProgram.id][cachedSeason.id] = {};
+				addedEvent = true;
+			}
+			if (typeof this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region] === "undefined") {
+				this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region] = [];
+				addedEvent = true;
+			}
+
+			if (forceRefresh) {
+				console.log(`CacheController.LoadEventBySKU - Removing existing cache item if it exists - ${eventSKU}`);
+				this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region] = this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region].filter(x => x.EventInfo.id !== event.id);
+			}
+			
+			//for this application, we only care about finalized events (unless specifically checking for incomplete event)
+			if (event.awards_finalized || allowNonFinal === true) {
+				let existingEvent = this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region].find(y => y.EventInfo.id === event.id && y.EventInfo.sku === event.sku);
+				//if the event is cached but it has been completed since the cache, update the cache to get all information
+				if (typeof existingEvent === "undefined" || existingEvent.EventInfo.awards_finalized !== event.awards_finalized) {
+					console.log(`CacheController.LoadEventBySKU - Creating cache for event - ${eventSKU}`);
+					//this event doesn't exist in the cache yet - add it
+					const cacheEventObject: EC_EventInfo = {
+						id: event.id,
+						sku: event.sku,
+						name: event.name,
+						start: event.start,
+						end: event.end,
+						location: event.location,
+						divisions: event.divisions,
+						level: event.level,
+						ongoing: event.ongoing,
+						awards_finalized: event.awards_finalized,
+						event_type: event.event_type
+					};
+					let cacheObject: EventCacheObject = {
+						EventInfo: cacheEventObject,
+						TeamResults: {},
+						QualiMatches: {},
+						ElimMatches: {},
+						Awards: []
+					};
+					//if cached event exists and we are still creating cache (in the event the tournament is finalized), remove the old cache
+					if (typeof existingEvent !== "undefined") {
+						this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region] = this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region].filter(x => x.EventInfo.id !== existingEvent.EventInfo.id);
+					}
+					this.cache.Events[cachedProgram.id][cachedSeason.id][event.location.region].push(cacheObject);
+					await this.LoadEventCacheObject(cacheObject, cachedSeason);
+					addedEvent = true;
+				}
+			}
+		}
+		else {
+			console.error("ERROR CacheController.LoadEventBySKU - Invalid response from RE", thisResponse);
+		}
+		if (addedEvent) {
+			this.UpdateCacheFile();
+		}
+		console.log(`CacheController.LoadEventBySKU - End - ${eventSKU}`);
+	}
+
 	//Call the RE API to get a list of events that is filtered by the season and region and populate it in the cache
 	public async LoadEventListBySeasonRegion(seasonID: number, region: string, allowNonFinal?: boolean): Promise<void> {
 		console.log(`CacheController.LoadEventListBySeasonRegion - Begin - ${seasonID} ${region}`);

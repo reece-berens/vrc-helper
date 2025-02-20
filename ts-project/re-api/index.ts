@@ -224,7 +224,7 @@ export const Team_Events = async (param: REAPI.API.Team.Events.Request | null, u
 		}
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Team.Events.Request, REAPI.API.Team.Events.Response>(`/teams${param?.TeamID}/events`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Team.Events.Request, REAPI.API.Team.Events.Response>(`/teams/${param?.TeamID}/events`, param, requestPopulator, urlOverride);
 	return returnVal;
 }
 
