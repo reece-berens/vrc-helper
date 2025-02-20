@@ -368,6 +368,12 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 							elimPartnerData.value.push(elimPartner.name);
 						}
 
+						let elimResultsData: TSProj.EnhancedEmcee.Common.DisplayElement = {
+							label: "Elimination Results",
+							value: []
+						};
+						header_tournament.data.push(elimResultsData);
+
 						for (let elimMatch of thisTeamResults.EliminationResults) {
 							//use the same logic as qualification matches
 							matchCountElim++;
@@ -385,19 +391,28 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 								else {
 									otherAlliance = elimMatch.alliances[0];
 								}
+								let elimResultDisplay = `${elimMatch.division.name}: ${elimMatch.name} - `;
 								let wltResult = 0;
 								if (teamAlliance.score > otherAlliance.score) {
 									wltResult = 1;
 									seasonElimWLT.Win++;
+									elimResultDisplay += "WIN ";
 								}
 								else if (teamAlliance.score < otherAlliance.score) {
 									wltResult = 2;
 									seasonElimWLT.Loss++;
+									elimResultDisplay += "LOSS ";
 								}
 								else {
 									wltResult = 3;
 									seasonElimWLT.Tie++;
+									elimResultDisplay += "TIE ";
 								}
+								elimResultDisplay += `${teamAlliance.score}-${otherAlliance.score} vs. `;
+								otherAlliance.teams.forEach(otherTeam => elimResultDisplay += `${otherTeam.team.name}, `);
+								elimResultDisplay = elimResultDisplay.substring(0, elimResultDisplay.length - 2);
+								elimResultsData.value.push(elimResultDisplay);
+								
 								//see if the team was on their current color - update asColorWLT if so
 								if (teamAlliance.color === "blue") {
 									asColorWLT[wltResult === 1 ? "Win" : (wltResult === 2 ? "Loss" : "Tie")]++;
@@ -883,11 +898,11 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 											header_WithAlliance1.data.push(existingDataObj);
 										}
 										var dataString = `${qualiMatch.name} - `;
-										teamAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-										dataString = dataString.substring(0, dataString.length - 1);
+										teamAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+										dataString = dataString.substring(0, dataString.length - 2);
 										dataString += ` ${teamAlliance.score} - ${otherAlliance.score} `;
-										otherAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-										dataString = dataString.substring(0, dataString.length - 1);
+										otherAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+										dataString = dataString.substring(0, dataString.length - 2);
 										existingDataObj.value.push(dataString);
 										alliancePartner++;
 									}
@@ -905,11 +920,11 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 											header_WithAlliance2.data.push(existingDataObj);
 										}
 										var dataString = `${qualiMatch.name} - `;
-										teamAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-										dataString = dataString.substring(0, dataString.length - 1);
+										teamAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+										dataString = dataString.substring(0, dataString.length - 2);
 										dataString += ` ${teamAlliance.score} - ${otherAlliance.score} `;
-										otherAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-										dataString = dataString.substring(0, dataString.length - 1);
+										otherAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+										dataString = dataString.substring(0, dataString.length - 2);
 										existingDataObj.value.push(dataString);
 									}
 								}
@@ -934,11 +949,11 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 										headerOpp.data.push(existingDataObj);
 									}
 									var dataString = `${qualiMatch.name} - `;
-									teamAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-									dataString = dataString.substring(0, dataString.length - 1);
+									teamAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+									dataString = dataString.substring(0, dataString.length - 2);
 									dataString += ` ${teamAlliance.score} - ${otherAlliance.score} `;
-									otherAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-									dataString = dataString.substring(0, dataString.length - 1);
+									otherAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+									dataString = dataString.substring(0, dataString.length - 2);
 									existingDataObj.value.push(dataString);
 								}
 							}
@@ -959,6 +974,12 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 							elimPartnerData.value.push(elimPartner.name);
 						}
 
+						let elimResultsData: TSProj.EnhancedEmcee.Common.DisplayElement = {
+							label: "Elimination Results",
+							value: []
+						};
+						header_tournament.data.push(elimResultsData);
+
 						for (let elimMatch of thisTeamResults.EliminationResults) {
 							//use the same logic as qualification matches
 							matchCountElim++;
@@ -970,6 +991,7 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 									score: 0,
 									teams: []
 								};
+								let elimResultDisplay = `${elimMatch.division.name}: ${elimMatch.name} - `;
 								if (thisAllianceIndex === 0) {
 									otherAlliance = elimMatch.alliances[1];
 								}
@@ -980,15 +1002,23 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 								if (teamAlliance.score > otherAlliance.score) {
 									wltResult = 1;
 									seasonElimWLT.Win++;
+									elimResultDisplay += "WIN ";
 								}
 								else if (teamAlliance.score < otherAlliance.score) {
 									wltResult = 2;
 									seasonElimWLT.Loss++;
+									elimResultDisplay += "LOSS ";
 								}
 								else {
 									wltResult = 3;
 									seasonElimWLT.Tie++;
+									elimResultDisplay += "TIE ";
 								}
+								elimResultDisplay += `${teamAlliance.score}-${otherAlliance.score} vs. `;
+								otherAlliance.teams.forEach(otherTeam => elimResultDisplay += `${otherTeam.team.name}, `);
+								elimResultDisplay = elimResultDisplay.substring(0, elimResultDisplay.length - 2);
+								elimResultsData.value.push(elimResultDisplay);
+
 								//see if the team was on their current color - update asColorWLT if so
 								if (teamAlliance.color === "red") {
 									asColorWLT[wltResult === 1 ? "Win" : (wltResult === 2 ? "Loss" : "Tie")]++;
@@ -1012,11 +1042,11 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 												header_WithAlliance1.data.push(existingDataObj);
 											}
 											var dataString = `${elimMatch.division.name}: ${elimMatch.name} - `;
-											teamAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-											dataString = dataString.substring(0, dataString.length - 1);
+											teamAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+											dataString = dataString.substring(0, dataString.length - 2);
 											dataString += ` ${teamAlliance.score} - ${otherAlliance.score} `;
-											otherAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-											dataString = dataString.substring(0, dataString.length - 1);
+											otherAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+											dataString = dataString.substring(0, dataString.length - 2);
 											existingDataObj.value.push(dataString);
 											alliancePartner++;
 										}
@@ -1034,11 +1064,11 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 												header_WithAlliance2.data.push(existingDataObj);
 											}
 											var dataString = `${elimMatch.division.name}: ${elimMatch.name} - `;
-											teamAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-											dataString = dataString.substring(0, dataString.length - 1);
+											teamAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+											dataString = dataString.substring(0, dataString.length - 2);
 											dataString += ` ${teamAlliance.score} - ${otherAlliance.score} `;
-											otherAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-											dataString = dataString.substring(0, dataString.length - 1);
+											otherAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+											dataString = dataString.substring(0, dataString.length - 2);
 											existingDataObj.value.push(dataString);
 										}
 									}
@@ -1063,11 +1093,11 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 											headerOpp.data.push(existingDataObj);
 										}
 										var dataString = `${elimMatch.name} - `;
-										teamAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-										dataString = dataString.substring(0, dataString.length - 1);
+										teamAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+										dataString = dataString.substring(0, dataString.length - 2);
 										dataString += ` ${teamAlliance.score} - ${otherAlliance.score} `;
-										otherAlliance.teams.forEach(x => dataString += `${x.team.name},`);
-										dataString = dataString.substring(0, dataString.length - 1);
+										otherAlliance.teams.forEach(x => dataString += `${x.team.name}, `);
+										dataString = dataString.substring(0, dataString.length - 2);
 										existingDataObj.value.push(dataString);
 									}
 								}
@@ -1117,7 +1147,6 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						if (highCombinedSkills.Value < totalScore) {
 							highCombinedSkills.Event = cachedEvent.EventInfo;
 							highCombinedSkills.Value = totalScore;
-							console.log(`updated high combined skills for ${curRedTeam} - ${totalScore}`);
 						}
 					}
 					//#endregion

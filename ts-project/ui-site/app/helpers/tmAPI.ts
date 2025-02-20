@@ -187,6 +187,22 @@ class TM_API {
 		}
 	}
 
+	async GetEvent(): Promise<TMAPI.API.Event.Response> {
+		try {
+			const response = await this.MakeTMAPIRequest<TMAPI.API.Event.Response>("/api/event", "GET");
+			return response;
+		}
+		catch (err) {
+			alert("Error loading event information, check console for details");
+			return {
+				event: {
+					name: "",
+					code: ""
+				}
+			};
+		}
+	}
+
 	//List of matches cannot be retrieved directly from here due to CORS policies in TM, have to go through Express server
 	async GetMatchList(request: TMAPI.API.Matches.Request): Promise<TMAPI.API.Matches.Response> {
 		try {

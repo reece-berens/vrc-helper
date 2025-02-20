@@ -20,6 +20,12 @@ export namespace TMAPI {
 			}
 		}
 
+		export namespace Event {
+			export interface Response {
+				event: Objects.Event;
+			}
+		}
+
 		export namespace Fields {
 			export interface Request {
 				FieldSetID: number;
@@ -97,6 +103,11 @@ export namespace TMAPI {
 		}
 	}
 	export namespace Objects {
+		export interface Event {
+			code: string;
+			name: string;
+		}
+
 		export interface FieldMatchAssignment {
 			//key is by field ID - if a field set ID key is needed, define it somewhere else
 			[key: number]: Match.Tuple;
@@ -118,6 +129,7 @@ export namespace TMAPI {
 
 			export interface Info {
 				alliances: Alliance[];
+				matchTuple: Tuple;
 				state: string;
 				timeScheduled: number;
 			}
@@ -125,11 +137,10 @@ export namespace TMAPI {
 			export interface Object {
 				finalScore: number[];
 				matchInfo: Info;
-				matchTuple: Tuple;
 				winningAlliance: number;
 			}
 
-			export interface Tuple  {
+			export interface Tuple {
 				session: number;
 				division: number;
 				round: string;
