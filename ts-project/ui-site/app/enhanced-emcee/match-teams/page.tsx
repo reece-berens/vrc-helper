@@ -21,6 +21,7 @@ import Icon_Adjust from "@mui/icons-material/Adjust";
 import Icon_ArrowForward from "@mui/icons-material/ArrowForwardIos";
 
 import useTMAPI from "../../helpers/useTMAPI_Hook";
+import { PieChart } from '@mui/x-charts/PieChart';
 
 const baseExpressAPI = process.env.NEXT_PUBLIC_API_URL || "";
 const expressUsername = process.env.NEXT_PUBLIC_API_USERNAME || "";
@@ -55,15 +56,16 @@ const TabsStyling = styled(Tabs)({
 	"& .MuiTabs-indicator": {
 		backgroundColor: "#000000",
 		height: "4px"
-	}
+	}//,
+	//variant: {xs: "fullWidth", sm: "scrollable"}
 })
 
-const SelectedTabStyling = styled((props: SeletedTabStylingProps) => <Tab {...props} />)(({theme, ...other}) => {console.log("hello theme"); console.log(other); return ({
+const SelectedTabStyling = styled((props: SeletedTabStylingProps) => <Tab {...props} />)(({theme, ...other}) => { return ({
 	backgroundColor: other.color === "red" ? "#dc004e" : "#1976d2",
 	color: "white",
 	"&.Mui-selected": {
 		backgroundColor: "lightgray",
-		color: "black"
+		color: other.color === "red" ? "#dc004e" : "#1976d2"
 	},
 })});
 
@@ -311,7 +313,7 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 					</IconButton>
 				</Grid>
 			</Grid>
-			<TabsStyling variant="scrollable" value={teamTabSelected} onChange={onChangeTeamTab}>
+			<TabsStyling value={teamTabSelected} onChange={onChangeTeamTab}>
 				{displayMatch.matchInfo.alliances.map((alliance, a_i) => {
 					return alliance.teams.map((team, t_i) => (
 						<SelectedTabStyling key={`${a_i}-${t_i}`} color={a_i === 0 ? "red" : "blue"} label={team.number} />
@@ -335,17 +337,43 @@ interface TeamDisplayDataProps {
 }
 
 const TeamDisplayData: React.FC<TeamDisplayDataProps> = (props) => {
-	const [openAccordion, _openAccordion] = useState<string>("Team Identifier");
+	const [openAccordion, _openAccordion] = useState<string>();
 
-	useEffect(() => {
-		_openAccordion("Team Identifier");
-	}, [props.SelectedTabIndex, props.MatchData]);
+	// useEffect(() => {
+	// 	_openAccordion("Team Identifier");
+	// }, [props.SelectedTabIndex, props.MatchData]);
 
 	return (
 		<>
 			{
 				props.SelectedTabIndex === props.ThisTabIndex && props.MatchData[props.MyTeamNumber] && (
 					<>
+						<Grid container flexDirection={"column"} padding={2}>
+							<Typography component="span" variant="h5" fontWeight="bold">Season Overview</Typography>
+							<Grid container flexDirection={"column"} spacing={2} padding={2}>
+								<Typography variant="subtitle1">Win/Loss/Tie Record:</Typography>
+								<PieChart
+									colors={["#dc004e", "#1976d2", 'purple']}
+									series={[
+										{
+											data: [
+												{ id: 0, value: props.MatchData[props.MyTeamNumber].DataHeaders[0].data[0].value[0].split(" ")[1].split("-")[0], label: 'Wins'},
+												{ id: 1, value: props.MatchData[props.MyTeamNumber].DataHeaders[0].data[0].value[0].split(" ")[1].split("-")[1], label: 'Losses' },
+												{ id: 2, value: props.MatchData[props.MyTeamNumber].DataHeaders[0].data[0].value[0].split(" ")[1].split("-")[2], label: 'Ties' },
+											],
+											innerRadius: 10,
+											paddingAngle: 1,
+											cornerRadius: 5,
+											arcLabel: (item) => `${item.value}`,
+											arcLabelMinAngle: 35
+										},
+									]}
+									width={250}
+									height={125}
+								/>
+							</Grid>
+						</Grid>
+						
 						<Accordion expanded={openAccordion === "Team Identifier"} onChange={() => _openAccordion(old => old === "Team Identifier" ? "" : "Team Identifier")}>
 							<AccordionSummary>
 								<Typography component="span" fontWeight="bold">Team Identifier</Typography>
