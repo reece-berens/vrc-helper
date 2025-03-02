@@ -2,6 +2,8 @@ import {Express} from "express";
 
 import {TSProj} from "types-lib";
 
+import GetPSRData from "./psr-data";
+
 const BuildRegionRoutes = (app: Express): void => {
 	app.get("/enhanced-emcee/psr/dd/programs", (req, response) => {
 		var request = req as TSProj.Express.Request;
@@ -98,7 +100,38 @@ const BuildRegionRoutes = (app: Express): void => {
 			}
 			else {
 				//probably call some method to populate the list that uses the cache object from the request
-				var returnData: TSProj.EnhancedEmcee.ProgramSeasonRegion.DataResponse = [];				
+				/*
+				var returnData: TSProj.EnhancedEmcee.ProgramSeasonRegion.DataResponse = [];
+				returnData.push({
+					data: [
+						{
+							label: "Number of tournaments",
+							value: ["10 total", "6 HS Only", "3 MS Only", "1 Blended HS/MS"]
+						},
+						{
+							label: "Total organizations",
+							value: ["12", "5 of them are HS"]
+						},
+						{
+							label: "Total number of qualification matches",
+							value: ["500", "300 in HS tournaments", "200 in MS tournaments"]
+						},
+					],
+					name: "Data from entire region",
+					order: 1
+				});
+				returnData.push({
+					data: [
+						{
+							label: "Number of teams participating",
+							value: ["23"]
+						}
+					],
+					name: "Data from HS tournaments",
+					order: 1
+				});
+				*/
+				const returnData = GetPSRData(programID, seasonID, regionReq, request._RE_Cache);
 				response.json(returnData);
 			}
 		}

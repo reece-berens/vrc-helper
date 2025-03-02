@@ -1,4 +1,3 @@
-import RenderFromTemplateContext from "next/dist/client/components/render-from-template-context";
 import {EC_EventInfo, REAPI, RECache, TSProj} from "types-lib";
 
 interface HighestNumberEvent {
