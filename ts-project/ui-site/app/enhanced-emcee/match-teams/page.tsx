@@ -19,6 +19,7 @@ import Typography from "@mui/material/Typography";
 
 import Icon_Adjust from "@mui/icons-material/Adjust";
 import Icon_ArrowForward from "@mui/icons-material/ArrowForwardIos";
+import Icon_Refresh from "@mui/icons-material/Refresh";
 
 import useTMAPI from "../../helpers/useTMAPI_Hook";
 
@@ -210,6 +211,12 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 		_displayMatch(firstMatch);
 	}
 
+	const onClickRefreshMatchList = () => {
+		tmAPI.GetMatchList({DivisionID: selectedDivision}).then(x => {
+			_tmMatchList(x.matches);
+		});
+	}
+
 	const onClickNextMatch = () => {
 		if (displayMatch.matchInfo.matchTuple.division !== 0) {
 			const curMatchTupleID = BuildMatchTupleIdentifier(displayMatch.matchInfo.matchTuple);
@@ -297,9 +304,16 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 						</Select>
 					</FormControl>
 				</Grid>
-				<Grid size={3} display={{xs: "inherit", sm: "none"}}>
+				{/* Hide this control until I get full TM integrations working
+				<Grid size={3} display={{xs: "none", sm: "none"}}>
 					<IconButton size="large" onClick={onClickCurrentMatch}>
 						<Icon_Adjust fontSize="inherit" />
+					</IconButton>
+				</Grid>
+				*/}
+				<Grid size={3} display={{xs: "inherit", sm: "inherit"}}>
+					<IconButton size="large" onClick={onClickRefreshMatchList}>
+						<Icon_Refresh fontSize="inherit" />
 					</IconButton>
 				</Grid>
 				<Grid size={3} display={{xs: "inherit", sm: "inherit"}}>
@@ -332,10 +346,10 @@ interface TeamDisplayDataProps {
 }
 
 const TeamDisplayData: React.FC<TeamDisplayDataProps> = (props) => {
-	const [openAccordion, _openAccordion] = useState<string>("Team Identifier");
+	const [openAccordion, _openAccordion] = useState<string>("Season Stats");
 
 	useEffect(() => {
-		_openAccordion("Team Identifier");
+		_openAccordion("Season Stats");
 	}, [props.SelectedTabIndex, props.MatchData]);
 
 	return (
@@ -343,15 +357,9 @@ const TeamDisplayData: React.FC<TeamDisplayDataProps> = (props) => {
 			{
 				props.SelectedTabIndex === props.ThisTabIndex && props.MatchData[props.MyTeamNumber] && (
 					<>
-						<Accordion expanded={openAccordion === "Team Identifier"} onChange={() => _openAccordion(old => old === "Team Identifier" ? "" : "Team Identifier")}>
-							<AccordionSummary>
-								<Typography component="span" fontWeight="bold">Team Identifier</Typography>
-							</AccordionSummary>
-							<AccordionDetails>
-								<Typography variant="h5">{props.MatchData[props.MyTeamNumber].HeaderLine || ""}</Typography>
-								<Typography variant="subtitle1">{props.MatchData[props.MyTeamNumber].SubHeaderLine || ""}</Typography>
-							</AccordionDetails>
-						</Accordion>
+						<Typography variant="h5">{props.MatchData[props.MyTeamNumber].HeaderLine || ""}</Typography>
+						<Typography variant="subtitle1">{props.MatchData[props.MyTeamNumber].SubHeaderLine || ""}</Typography>
+
 						{
 							props.MatchData[props.MyTeamNumber].DataHeaders.map((x, x_i) => (
 								<Accordion key={x_i} expanded={openAccordion === x.name} onChange={() => _openAccordion(old => x.name === old ? "" : x.name)}>

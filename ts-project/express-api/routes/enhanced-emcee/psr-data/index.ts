@@ -151,6 +151,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	};
 	const msv_matchCountTeams: CountByTeamID = {};
 	const msv_tournamentCountTeams: CountByTeamID = {};
+	const msv_awardCountTeams: CountByTeamID = {};
 
 	const hsv_highestSkillsDriver: HighestNumberEvent = {
 		Combos: [],
@@ -174,8 +175,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	};
 	const hsv_matchCountTeams: CountByTeamID = {};
 	const hsv_tournamentCountTeams: CountByTeamID = {};
-	
-	
+	const hsv_awardCountTeams: CountByTeamID = {};
 
 	if (typeof cache.Events !== "undefined" && typeof cache.Events[programID] !== "undefined" && typeof cache.Events[programID][seasonID] !== "undefined" && typeof cache.Events[programID][seasonID][region] !== "undefined" &&
 		typeof cache.TeamReverseLookup !== "undefined" && typeof cache.TeamReverseLookup[seasonID] !== "undefined" && typeof cache.Teams !== "undefined" && typeof cache.Teams[seasonID] !== "undefined"
@@ -231,7 +231,6 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 							hsTournaments.RegionSkillsRuns += skillResult.attempts;
 						}
 						if (typeof hsv_tournamentCountTeams[teamIDInt] === "undefined") {
-							console.log(`first load of HS team tourney count - ${cache.Teams[seasonID][teamIDInt].number}`);
 							hsv_tournamentCountTeams[teamIDInt] = 0;
 						}
 						hsv_tournamentCountTeams[teamIDInt] = hsv_tournamentCountTeams[teamIDInt] + 1;
@@ -241,7 +240,6 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 							msTournaments.RegionSkillsRuns += skillResult.attempts;
 						}
 						if (typeof msv_tournamentCountTeams[teamIDInt] === "undefined") {
-							console.log(`first load of MS team tourney count - ${cache.Teams[seasonID][teamIDInt].number}`);
 							msv_tournamentCountTeams[teamIDInt] = 0;
 						}
 						msv_tournamentCountTeams[teamIDInt] = msv_tournamentCountTeams[teamIDInt] + 1;
@@ -654,6 +652,30 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 					}
 				}
 			}
+			curEvent.Awards.forEach(award => {
+				if (Array.isArray(award.teamWinners)) {
+					award.teamWinners.forEach(team => {
+						//find out if team is MS or HS, as well as if they're in the region
+						const thisTeam = cache.Teams[seasonID][team.team.id];
+						if (thisTeam.location.region === region) {
+							if (thisTeam.grade === "Middle School") {
+								if (typeof msv_awardCountTeams[team.team.id] === "undefined") {
+									msv_awardCountTeams[team.team.id] = 0;
+								}
+								msv_awardCountTeams[team.team.id]++;
+							}
+							else if (thisTeam.grade === "High School") {
+								if (typeof hsv_awardCountTeams[team.team.id] === "undefined") {
+									hsv_awardCountTeams[team.team.id] = 0;
+								}
+								hsv_awardCountTeams[team.team.id]++;
+							}
+						}
+					});
+				}
+			});
+
+
 			//load data from this tournament to the final things
 			let typeToUpdate: SeasonTournamentType = blendedTournaments;
 			if (isBlendedEvent) {
@@ -785,7 +807,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 			lowAlliance = x.Match.alliances.find(x => x.color === "blue") || lowAlliance;
 		}
 		var displayString = `${highAlliance.teams[0].team.name}, ${highAlliance.teams[1].team.name} ${x.allianceColor.toUpperCase()} ${highAlliance.score}-${lowAlliance.score} ${lowAlliance.color.toUpperCase()} ${lowAlliance.teams[0].team.name}, ${lowAlliance.teams[1].team.name}`;
-		ms_allianceDisplay.value.push(`${displayString} at ${x.Event.name} on ${dateObj.toLocaleDateString()}`);
+		ms_allianceDisplay.value.push(`${x.Match.name} - ${displayString} at ${x.Event.name} on ${dateObj.toLocaleDateString()}`);
 	});
 	msHeader.data.push(ms_allianceDisplay);
 	const ms_avgPointsDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
@@ -798,7 +820,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 		ms_avgPointsDisplay.value.push(`${x.Team.number} at ${x.Event.name} on ${dateObj.toLocaleDateString()}`);
 	});
 	const ms_matchCountDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
-		label: "Most Matches Played by Team In Region",
+		label: "Most Regional Matches Played by Regional Team",
 		value: [],
 	};
 	let ms_mostMatchesNum = 0;
@@ -818,7 +840,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	ms_mostMatchesTeams.forEach(x => ms_matchCountDisplay.value.push(`${cache.Teams[seasonID][x].number} - ${cache.Teams[seasonID][x].team_name}`));
 	msHeader.data.push(ms_matchCountDisplay);
 	const ms_tourneyCountDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
-		label: "Most Tournaments Attended by Team In Region",
+		label: "Most Regional Tournaments Attended by Regional Team",
 		value: [],
 	};
 	let ms_mostTourneysNum = 0;
@@ -837,6 +859,26 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	ms_mostTourneysTeams.sort((a, b) => cache.Teams[seasonID][a].number < cache.Teams[seasonID][b].number ? -1 : 1);
 	ms_mostTourneysTeams.forEach(x => ms_tourneyCountDisplay.value.push(`${cache.Teams[seasonID][x].number} - ${cache.Teams[seasonID][x].team_name}`));
 	msHeader.data.push(ms_tourneyCountDisplay);
+	const ms_awardCountDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
+		label: "Most Awards Received by Region Team In Region Tournaments",
+		value: [],
+	};
+	let ms_mostAwardsNum = 0;
+	let ms_mostAwardsTeams: number[] = [];
+	for (let teamNum of Object.keys(msv_awardCountTeams)) {
+		let teamNumIDInt = parseInt(teamNum);
+		if (msv_awardCountTeams[teamNumIDInt] === ms_mostAwardsNum) {
+			ms_mostAwardsTeams.push(teamNumIDInt);
+		}
+		else if (msv_awardCountTeams[teamNumIDInt] > ms_mostAwardsNum) {
+			ms_mostAwardsTeams = [teamNumIDInt];
+			ms_mostAwardsNum = msv_awardCountTeams[teamNumIDInt];
+		}
+	}
+	ms_awardCountDisplay.value.push(ms_mostAwardsNum.toString());
+	ms_mostAwardsTeams.sort((a, b) => cache.Teams[seasonID][a].number < cache.Teams[seasonID][b].number ? -1 : 1);
+	ms_mostAwardsTeams.forEach(x => ms_awardCountDisplay.value.push(`${cache.Teams[seasonID][x].number} - ${cache.Teams[seasonID][x].team_name}`));
+	msHeader.data.push(ms_awardCountDisplay);
 
 
 	const hs_driverSkillsDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
@@ -860,7 +902,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	});
 	hsHeader.data.push(hs_programSkillsDisplay);
 	const hs_CombinedSkillsDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
-		label: "Highest Skills Score at Tournament (Driver + Program)",
+		label: "Highest Skills Score at Region Tournament (Driver + Program)",
 		value: [`${hsv_highestSkillsCombined.Value}`]
 	};
 	hsv_highestSkillsCombined.Combos.forEach(x => {
@@ -887,7 +929,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 			lowAlliance = x.Match.alliances.find(x => x.color === "blue") || lowAlliance;
 		}
 		var displayString = `${highAlliance.teams[0].team.name}, ${highAlliance.teams[1].team.name} ${x.allianceColor.toUpperCase()} ${highAlliance.score}-${lowAlliance.score} ${lowAlliance.color.toUpperCase()} ${lowAlliance.teams[0].team.name}, ${lowAlliance.teams[1].team.name}`;
-		hs_allianceDisplay.value.push(`${displayString} at ${x.Event.name} on ${dateObj.toLocaleDateString()}`);
+		hs_allianceDisplay.value.push(`${x.Match.name} - ${displayString} at ${x.Event.name} on ${dateObj.toLocaleDateString()}`);
 	});
 	hsHeader.data.push(hs_allianceDisplay);
 	const hs_avgPointsDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
@@ -900,7 +942,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 		hs_avgPointsDisplay.value.push(`${x.Team.number} at ${x.Event.name} on ${dateObj.toLocaleDateString()}`);
 	});
 	const hs_matchCountDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
-		label: "Most Matches Played by Team In Region",
+		label: "Most Regional Matches Played by Regional Team",
 		value: [],
 	};
 	let hs_mostMatchesNum = 0;
@@ -920,7 +962,7 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	hs_mostMatchesTeams.forEach(x => hs_matchCountDisplay.value.push(`${cache.Teams[seasonID][x].number} - ${cache.Teams[seasonID][x].team_name}`));
 	hsHeader.data.push(hs_matchCountDisplay);
 	const hs_tourneyCountDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
-		label: "Most Tournaments Attended by Team In Region",
+		label: "Most Regional Tournaments Attended by Regional Team",
 		value: [],
 	};
 	let hs_mostTourneysNum = 0;
@@ -939,6 +981,26 @@ const GetPSRData = (programID: number, seasonID: number, region: string, cache: 
 	hs_mostTourneysTeams.sort((a, b) => cache.Teams[seasonID][a].number < cache.Teams[seasonID][b].number ? -1 : 1);
 	hs_mostTourneysTeams.forEach(x => hs_tourneyCountDisplay.value.push(`${cache.Teams[seasonID][x].number} - ${cache.Teams[seasonID][x].team_name}`));
 	hsHeader.data.push(hs_tourneyCountDisplay);
+	const hs_awardCountDisplay: TSProj.EnhancedEmcee.Common.DisplayElement = {
+		label: "Most Awards Received by Region Team In Region Tournaments",
+		value: [],
+	};
+	let hs_mostAwardsNum = 0;
+	let hs_mostAwardsTeams: number[] = [];
+	for (let teamNum of Object.keys(hsv_awardCountTeams)) {
+		let teamNumIDInt = parseInt(teamNum);
+		if (hsv_awardCountTeams[teamNumIDInt] === hs_mostAwardsNum) {
+			hs_mostAwardsTeams.push(teamNumIDInt);
+		}
+		else if (hsv_awardCountTeams[teamNumIDInt] > hs_mostAwardsNum) {
+			hs_mostAwardsTeams = [teamNumIDInt];
+			hs_mostAwardsNum = hsv_awardCountTeams[teamNumIDInt];
+		}
+	}
+	hs_awardCountDisplay.value.push(hs_mostAwardsNum.toString());
+	hs_mostAwardsTeams.sort((a, b) => cache.Teams[seasonID][a].number < cache.Teams[seasonID][b].number ? -1 : 1);
+	hs_mostAwardsTeams.forEach(x => hs_awardCountDisplay.value.push(`${cache.Teams[seasonID][x].number} - ${cache.Teams[seasonID][x].team_name}`));
+	hsHeader.data.push(hs_awardCountDisplay);
 
 	const retVal: TSProj.EnhancedEmcee.ProgramSeasonRegion.DataResponse = [msHeader, hsHeader];
 	return retVal;

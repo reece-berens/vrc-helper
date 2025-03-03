@@ -346,7 +346,7 @@ export const Season_Events = async (param: REAPI.API.Season.Events.Request | nul
 		}
 	}
 
-	const returnVal = await DoLogic<REAPI.API.Season.Events.Request, REAPI.API.Season.Events.Response>(`/seasons${param?.SeasonID}/events`, param, requestPopulator, urlOverride);
+	const returnVal = await DoLogic<REAPI.API.Season.Events.Request, REAPI.API.Season.Events.Response>(`/seasons/${param?.SeasonID}/events`, param, requestPopulator, urlOverride);
 	return returnVal;
 }
 

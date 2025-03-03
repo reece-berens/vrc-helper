@@ -1,4 +1,8 @@
-import {EC_EventInfo, REAPI, RECache, TSProj} from "types-lib";
+import {EC_Award, EC_EventInfo, REAPI, RECache, TSProj} from "types-lib";
+
+interface AwardCompiler {
+	[key: string]: number;
+}
 
 interface HighestNumberEvent {
 	Event: EC_EventInfo | null;
@@ -83,6 +87,15 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 			name: "Season Stats",
 			order: 1,
 			data: []
+		};
+		const display_compiledAwards: TSProj.EnhancedEmcee.Common.DisplayElement = {
+			label: "Compiled Awards",
+			value: []
+		};
+		const compiledAwards: AwardCompiler = {};
+		const display_seasonAwards: TSProj.EnhancedEmcee.Common.DisplayElement = {
+			label: "Detailed Awards",
+			value: [],
 		};
 		const header_WithAlliance1: TSProj.EnhancedEmcee.Common.HeaderItem = {
 			name: "With Alliance Partner 1",
@@ -204,6 +217,17 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						data: []
 					};
 					tournamentHeaderList.push({Header: header_tournament, TournamentDate: tourneyDate});
+					let tourneyLocation = "";
+					if (cachedEvent.EventInfo.location.venue !== null && cachedEvent.EventInfo.location.venue !== "") {
+						tourneyLocation = `${cachedEvent.EventInfo.location.venue}, `;
+					}
+					tourneyLocation += `${cachedEvent.EventInfo.location.city}, ${cachedEvent.EventInfo.location.region}`;
+					header_tournament.data.push({
+						label: "Location",
+						value: [
+							tourneyLocation
+						]
+					});
 
 					//#region Qualification Ranking Data
 
@@ -380,7 +404,39 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						};
 						header_tournament.data.push(elimResultsData);
 
-						for (let elimMatch of thisTeamResults.EliminationResults) {
+						const elimResultsForDisplay = [...thisTeamResults.EliminationResults];
+						elimResultsForDisplay.sort((a, b) => {
+							//round of 16 is round number 6... that should go before rounds 3-5 QF-Final...
+							if (a.round >= 6 && b.round < 6) {
+								return -1;
+							}
+							if (a.round < b.round) {
+								return -1;
+							}
+							else if (a.round > b.round) {
+								return 1;
+							}
+							else {
+								//same round (QF, SF, etc.) - order by instance
+								if (a.instance < b.instance) {
+									return -1;
+								}
+								else if (a.instance > b.instance) {
+									return 1;
+								}
+								else {
+									//same instance (QF 1, SF 2, etc.) - order by round
+									if (a.round < b.round) {
+										return -1;
+									}
+									else if (a.round > b.round) {
+										return 1;
+									}
+								}
+							}
+							return 0;
+						});
+						for (let elimMatch of elimResultsForDisplay) {
 							//use the same logic as qualification matches
 							matchCountElim++;
 							let teamAlliance = elimMatch.alliances.find(x => x.teams.some(y => y.team.name === curBlueTeam));
@@ -562,6 +618,10 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						};
 						header_tournament.data.push(awardsDisplay);
 						for (let award of teamAwards) {
+							if (typeof compiledAwards[award.title] === "undefined") {
+								compiledAwards[award.title] = 0;
+							}
+							compiledAwards[award.title]++;
 							var dataText = `${award.title}`;
 							if (award.qualifications.length > 0) {
 								dataText += " (Qualifications: ";
@@ -570,6 +630,7 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 								dataText += ")";
 							}
 							awardsDisplay.value.push(dataText);
+							display_seasonAwards.value.push(`${award.title.replace(/\(.*\)/, "")} - ${cachedEvent.EventInfo.name}`);
 						}
 					}
 					//#endregion
@@ -581,13 +642,19 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 		
 		//we have gone through all matches that this team has been a part of, now build all the compiled stats
 		//#region Compiled Season Data
+
+		const winPercentSeason = ((seasonQualiWLT.Win + seasonElimWLT.Win + (seasonQualiWLT.Tie * .5) + (seasonElimWLT.Tie * .5)) / 
+			(seasonQualiWLT.Win + seasonQualiWLT.Loss + seasonQualiWLT.Tie + seasonElimWLT.Win + seasonElimWLT.Loss + seasonElimWLT.Tie)) * 100;
+		const winPercentQuali = ((seasonQualiWLT.Win + (seasonQualiWLT.Tie * .5)) / (seasonQualiWLT.Win + seasonQualiWLT.Loss + seasonQualiWLT.Tie)) * 100;
+		const winPercentElim = ((seasonElimWLT.Win + (seasonElimWLT.Tie * .5)) / (seasonElimWLT.Win + seasonElimWLT.Loss + seasonElimWLT.Tie)) * 100;
+		const winPercentColor = ((asColorWLT.Win + (asColorWLT.Tie * .5)) / (asColorWLT.Win + asColorWLT.Loss + asColorWLT.Tie)) * 100;
 		header_SeasonCompiled.data.push({
 			label: "W-L-T",
 			value: [
-				`Season: ${seasonQualiWLT.Win + seasonElimWLT.Win}-${seasonQualiWLT.Loss + seasonElimWLT.Loss}-${seasonQualiWLT.Tie + seasonElimWLT.Tie}`,
-				`Qualification Matches: ${seasonQualiWLT.Win}-${seasonQualiWLT.Loss}-${seasonQualiWLT.Tie}`,
-				`Elimination Matches: ${seasonElimWLT.Win}-${seasonElimWLT.Loss}-${seasonElimWLT.Tie}`,
-				`As Blue Alliance: ${asColorWLT.Win}-${asColorWLT.Loss}-${asColorWLT.Tie}`
+				`Season: ${seasonQualiWLT.Win + seasonElimWLT.Win}-${seasonQualiWLT.Loss + seasonElimWLT.Loss}-${seasonQualiWLT.Tie + seasonElimWLT.Tie} (${winPercentSeason.toPrecision(4)}% wins)`,
+				`Qualification Matches: ${seasonQualiWLT.Win}-${seasonQualiWLT.Loss}-${seasonQualiWLT.Tie} (${winPercentQuali.toPrecision(4)}% wins)`,
+				`Elimination Matches: ${seasonElimWLT.Win}-${seasonElimWLT.Loss}-${seasonElimWLT.Tie} (${winPercentElim.toPrecision(4)}% wins)`,
+				`As Blue Alliance: ${asColorWLT.Win}-${asColorWLT.Loss}-${asColorWLT.Tie} (${winPercentColor.toPrecision(4)}% wins)`
 			]
 		});
 		header_SeasonCompiled.data.push({
@@ -628,23 +695,37 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 				`Highest Total Points in Quali Matches: ${highestTPQM.Value} (${highestTPQM.Event?.name} ${new Date(highestTPQM.Event?.start || "").toLocaleDateString()})`,
 			]
 		});
+		let totalAwards = 0;
+		Object.keys(compiledAwards).forEach(awardName => {
+			totalAwards += compiledAwards[awardName];
+			display_compiledAwards.value.push(`${compiledAwards[awardName]}x ${awardName.replace(/\(.*\)/, "")}`)
+		});
+		display_compiledAwards.value.push(`${totalAwards} in total`);
+		if (display_compiledAwards.value.length > 1) {
+			header_SeasonCompiled.data.push(display_compiledAwards);
+		}
+		header_SeasonCompiled.data.push(display_seasonAwards);
+		if (display_seasonAwards.value.length === 0) {
+			display_seasonAwards.value.push("No awards received... yet...");
+		}
 		//#endregion
 		
 		//#region With Alliance Partner 1
 
+		const winPercentAlliance1 = ((withAlliance1.WLT.Win + (withAlliance1.WLT.Tie * .5)) / (withAlliance1.WLT.Win + withAlliance1.WLT.Loss + withAlliance1.WLT.Tie)) * 100;
 		header_WithAlliance1.data[0].value.push(`Total Matches: ${withAlliance1.Matches}`);
-		header_WithAlliance1.data[0].value.push(`W-L-T: ${withAlliance1.WLT.Win}-${withAlliance1.WLT.Loss}-${withAlliance1.WLT.Tie}`);
+		header_WithAlliance1.data[0].value.push(`W-L-T: ${withAlliance1.WLT.Win}-${withAlliance1.WLT.Loss}-${withAlliance1.WLT.Tie} (${winPercentAlliance1.toPrecision(4)}% wins)`);
 		header_WithAlliance1.data[0].value.push(`Average Points/Match: ${(withAlliance1.Points / withAlliance1.Matches).toPrecision(2)}`);
 		header_WithAlliance1.data[0].value.push(`Total Points Scored: ${withAlliance1.Points}`);
-
 
 		//#endregion
 
 		//#region With Alliance Partner 2
 
 		if (blue.length === 3) {
+			const winPercentAlliance2 = ((withAlliance2.WLT.Win + (withAlliance2.WLT.Tie * .5)) / (withAlliance2.WLT.Win + withAlliance2.WLT.Loss + withAlliance2.WLT.Tie)) * 100;
 			header_WithAlliance2.data[0].value.push(`Total Matches: ${withAlliance2.Matches}`);
-			header_WithAlliance2.data[0].value.push(`W-L-T: ${withAlliance2.WLT.Win}-${withAlliance2.WLT.Loss}-${withAlliance2.WLT.Tie}`);
+			header_WithAlliance2.data[0].value.push(`W-L-T: ${withAlliance2.WLT.Win}-${withAlliance2.WLT.Loss}-${withAlliance2.WLT.Tie} (${winPercentAlliance2.toPrecision(4)}% wins)`);
 			header_WithAlliance2.data[0].value.push(`Average Points/Match: ${(withAlliance2.Points / withAlliance2.Matches).toPrecision(2)}`);
 			header_WithAlliance2.data[0].value.push(`Total Points Scored: ${withAlliance2.Points}`);
 		}
@@ -653,23 +734,26 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 
 		//#region Against Opponent 1
 
+		const winPercentOpp1 = ((againstAlliance1WLT.Win + (againstAlliance1WLT.Tie * .5)) / (againstAlliance1WLT.Win + againstAlliance1WLT.Loss + againstAlliance1WLT.Tie)) * 100;
 		header_AgainstAlliance1.data[0].value.push(`Total Matches: ${againstAlliance1WLT.Win + againstAlliance1WLT.Loss + againstAlliance1WLT.Tie}`);
-		header_AgainstAlliance1.data[0].value.push(`W-L-T: ${againstAlliance1WLT.Win}-${againstAlliance1WLT.Loss}-${againstAlliance1WLT.Tie}`);
+		header_AgainstAlliance1.data[0].value.push(`W-L-T: ${againstAlliance1WLT.Win}-${againstAlliance1WLT.Loss}-${againstAlliance1WLT.Tie} (${winPercentOpp1.toPrecision(4)}% wins)`);
 
 		//#endregion
 
 		//#region Against Opponent 2
 
+		const winPercentOpp2 = ((againstAlliance2WLT.Win + (againstAlliance2WLT.Tie * .5)) / (againstAlliance2WLT.Win + againstAlliance2WLT.Loss + againstAlliance2WLT.Tie)) * 100;
 		header_AgainstAlliance2.data[0].value.push(`Total Matches: ${againstAlliance2WLT.Win + againstAlliance2WLT.Loss + againstAlliance2WLT.Tie}`);
-		header_AgainstAlliance2.data[0].value.push(`W-L-T: ${againstAlliance2WLT.Win}-${againstAlliance2WLT.Loss}-${againstAlliance2WLT.Tie}`);
+		header_AgainstAlliance2.data[0].value.push(`W-L-T: ${againstAlliance2WLT.Win}-${againstAlliance2WLT.Loss}-${againstAlliance2WLT.Tie} (${winPercentOpp2.toPrecision(4)}% wins)`);
 
 		//#endregion
 
 		//#region Against Opponent 3
 
 		if (blue.length === 3) {
+			const winPercentOpp3 = ((againstAlliance3WLT.Win + (againstAlliance3WLT.Tie * .5)) / (againstAlliance3WLT.Win + againstAlliance3WLT.Loss + againstAlliance3WLT.Tie)) * 100;
 			header_AgainstAlliance3.data[0].value.push(`Total Matches: ${againstAlliance3WLT.Win + againstAlliance3WLT.Loss + againstAlliance3WLT.Tie}`);
-			header_AgainstAlliance3.data[0].value.push(`W-L-T: ${againstAlliance3WLT.Win}-${againstAlliance3WLT.Loss}-${againstAlliance3WLT.Tie}`);
+			header_AgainstAlliance3.data[0].value.push(`W-L-T: ${againstAlliance3WLT.Win}-${againstAlliance3WLT.Loss}-${againstAlliance3WLT.Tie} (${winPercentOpp3.toPrecision(4)}% wins)`);
 		}
 
 		//#endregion
@@ -693,6 +777,15 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 			name: "Season Stats",
 			order: 1,
 			data: []
+		};
+		const display_compiledAwards: TSProj.EnhancedEmcee.Common.DisplayElement = {
+			label: "Compiled Awards",
+			value: []
+		};
+		const compiledAwards: AwardCompiler = {};
+		const display_seasonAwards: TSProj.EnhancedEmcee.Common.DisplayElement = {
+			label: "Detailed Awards",
+			value: [],
 		};
 		const header_WithAlliance1: TSProj.EnhancedEmcee.Common.HeaderItem = {
 			name: "With Alliance Partner 1",
@@ -814,6 +907,17 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						data: []
 					};
 					tournamentHeaderList.push({Header: header_tournament, TournamentDate: tourneyDate});
+					let tourneyLocation = "";
+					if (cachedEvent.EventInfo.location.venue !== null && cachedEvent.EventInfo.location.venue !== "") {
+						tourneyLocation = `${cachedEvent.EventInfo.location.venue}, `;
+					}
+					tourneyLocation += `${cachedEvent.EventInfo.location.city}, ${cachedEvent.EventInfo.location.region}`;
+					header_tournament.data.push({
+						label: "Location",
+						value: [
+							tourneyLocation
+						]
+					});
 
 					//#region Qualification Ranking Data
 
@@ -990,7 +1094,39 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						};
 						header_tournament.data.push(elimResultsData);
 
-						for (let elimMatch of thisTeamResults.EliminationResults) {
+						const elimResultsForDisplay = [...thisTeamResults.EliminationResults];
+						elimResultsForDisplay.sort((a, b) => {
+							//round of 16 is round number 6... that should go before rounds 3-5 QF-Final...
+							if (a.round >= 6 && b.round < 6) {
+								return -1;
+							}
+							if (a.round < b.round) {
+								return -1;
+							}
+							else if (a.round > b.round) {
+								return 1;
+							}
+							else {
+								//same round (QF, SF, etc.) - order by instance
+								if (a.instance < b.instance) {
+									return -1;
+								}
+								else if (a.instance > b.instance) {
+									return 1;
+								}
+								else {
+									//same instance (QF 1, SF 2, etc.) - order by round
+									if (a.round < b.round) {
+										return -1;
+									}
+									else if (a.round > b.round) {
+										return 1;
+									}
+								}
+							}
+							return 0;
+						});
+						for (let elimMatch of elimResultsForDisplay) {
 							//use the same logic as qualification matches
 							matchCountElim++;
 							let teamAlliance = elimMatch.alliances.find(x => x.teams.some(y => y.team.name === curRedTeam));
@@ -1172,6 +1308,10 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 						};
 						header_tournament.data.push(awardsDisplay);
 						for (let award of teamAwards) {
+							if (typeof compiledAwards[award.title] === "undefined") {
+								compiledAwards[award.title] = 0;
+							}
+							compiledAwards[award.title]++;
 							var dataText = `${award.title}`;
 							if (award.qualifications.length > 0) {
 								dataText += " (Qualifications: ";
@@ -1180,6 +1320,7 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 								dataText += ")";
 							}
 							awardsDisplay.value.push(dataText);
+							display_seasonAwards.value.push(`${award.title.replace(/\(.*\)/, "")} - ${cachedEvent.EventInfo.name}`);
 						}
 					}
 					//#endregion
@@ -1191,13 +1332,19 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 		
 		//we have gone through all matches that this team has been a part of, now build all the compiled stats
 		//#region Compiled Season Data
+
+		const winPercentSeason = ((seasonQualiWLT.Win + seasonElimWLT.Win + (seasonQualiWLT.Tie * .5) + (seasonElimWLT.Tie * .5)) / 
+			(seasonQualiWLT.Win + seasonQualiWLT.Loss + seasonQualiWLT.Tie + seasonElimWLT.Win + seasonElimWLT.Loss + seasonElimWLT.Tie)) * 100;
+		const winPercentQuali = ((seasonQualiWLT.Win + (seasonQualiWLT.Tie * .5)) / (seasonQualiWLT.Win + seasonQualiWLT.Loss + seasonQualiWLT.Tie)) * 100;
+		const winPercentElim = ((seasonElimWLT.Win + (seasonElimWLT.Tie * .5)) / (seasonElimWLT.Win + seasonElimWLT.Loss + seasonElimWLT.Tie)) * 100;
+		const winPercentColor = ((asColorWLT.Win + (asColorWLT.Tie * .5)) / (asColorWLT.Win + asColorWLT.Loss + asColorWLT.Tie)) * 100;
 		header_SeasonCompiled.data.push({
 			label: "W-L-T",
 			value: [
-				`Season: ${seasonQualiWLT.Win + seasonElimWLT.Win}-${seasonQualiWLT.Loss + seasonElimWLT.Loss}-${seasonQualiWLT.Tie + seasonElimWLT.Tie}`,
-				`Qualification Matches: ${seasonQualiWLT.Win}-${seasonQualiWLT.Loss}-${seasonQualiWLT.Tie}`,
-				`Elimination Matches: ${seasonElimWLT.Win}-${seasonElimWLT.Loss}-${seasonElimWLT.Tie}`,
-				`As Red Alliance: ${asColorWLT.Win}-${asColorWLT.Loss}-${asColorWLT.Tie}`
+				`Season: ${seasonQualiWLT.Win + seasonElimWLT.Win}-${seasonQualiWLT.Loss + seasonElimWLT.Loss}-${seasonQualiWLT.Tie + seasonElimWLT.Tie} (${winPercentSeason.toPrecision(4)}% wins)`,
+				`Qualification Matches: ${seasonQualiWLT.Win}-${seasonQualiWLT.Loss}-${seasonQualiWLT.Tie} (${winPercentQuali.toPrecision(4)}% wins)`,
+				`Elimination Matches: ${seasonElimWLT.Win}-${seasonElimWLT.Loss}-${seasonElimWLT.Tie} (${winPercentElim.toPrecision(4)}% wins)`,
+				`As Red Alliance: ${asColorWLT.Win}-${asColorWLT.Loss}-${asColorWLT.Tie} (${winPercentColor.toPrecision(4)}% wins)`
 			]
 		});
 		header_SeasonCompiled.data.push({
@@ -1238,23 +1385,37 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 				`Highest Total Points in Quali Matches: ${highestTPQM.Value} (${highestTPQM.Event?.name} ${new Date(highestTPQM.Event?.start || "").toLocaleDateString()})`,
 			]
 		});
+		let totalAwards = 0;
+		Object.keys(compiledAwards).forEach(awardName => {
+			totalAwards += compiledAwards[awardName];
+			display_compiledAwards.value.push(`${compiledAwards[awardName]}x ${awardName.replace(/\(.*\)/, "")}`)
+		});
+		display_compiledAwards.value.push(`${totalAwards} in total`);
+		if (display_compiledAwards.value.length > 1) {
+			header_SeasonCompiled.data.push(display_compiledAwards);
+		}
+		header_SeasonCompiled.data.push(display_seasonAwards);
+		if (display_seasonAwards.value.length === 0) {
+			display_seasonAwards.value.push("No awards received... yet...");
+		}
 		//#endregion
 		
 		//#region With Alliance Partner 1
 
+		const winPercentAlliance1 = ((withAlliance1.WLT.Win + (withAlliance1.WLT.Tie * .5)) / (withAlliance1.WLT.Win + withAlliance1.WLT.Loss + withAlliance1.WLT.Tie)) * 100;
 		header_WithAlliance1.data[0].value.push(`Total Matches: ${withAlliance1.Matches}`);
-		header_WithAlliance1.data[0].value.push(`W-L-T: ${withAlliance1.WLT.Win}-${withAlliance1.WLT.Loss}-${withAlliance1.WLT.Tie}`);
+		header_WithAlliance1.data[0].value.push(`W-L-T: ${withAlliance1.WLT.Win}-${withAlliance1.WLT.Loss}-${withAlliance1.WLT.Tie} (${winPercentAlliance1.toPrecision(4)}% wins)`);
 		header_WithAlliance1.data[0].value.push(`Average Points/Match: ${(withAlliance1.Points / withAlliance1.Matches).toPrecision(2)}`);
 		header_WithAlliance1.data[0].value.push(`Total Points Scored: ${withAlliance1.Points}`);
-
 
 		//#endregion
 
 		//#region With Alliance Partner 2
 
-		if (blue.length === 3) {
+		if (red.length === 3) {
+			const winPercentAlliance2 = ((withAlliance2.WLT.Win + (withAlliance2.WLT.Tie * .5)) / (withAlliance2.WLT.Win + withAlliance2.WLT.Loss + withAlliance2.WLT.Tie)) * 100;
 			header_WithAlliance2.data[0].value.push(`Total Matches: ${withAlliance2.Matches}`);
-			header_WithAlliance2.data[0].value.push(`W-L-T: ${withAlliance2.WLT.Win}-${withAlliance2.WLT.Loss}-${withAlliance2.WLT.Tie}`);
+			header_WithAlliance2.data[0].value.push(`W-L-T: ${withAlliance2.WLT.Win}-${withAlliance2.WLT.Loss}-${withAlliance2.WLT.Tie} (${winPercentAlliance2.toPrecision(4)}% wins)`);
 			header_WithAlliance2.data[0].value.push(`Average Points/Match: ${(withAlliance2.Points / withAlliance2.Matches).toPrecision(2)}`);
 			header_WithAlliance2.data[0].value.push(`Total Points Scored: ${withAlliance2.Points}`);
 		}
@@ -1263,23 +1424,26 @@ const GetMatchTeamData = (programID: number, seasonID: number, region: string | 
 
 		//#region Against Opponent 1
 
+		const winPercentOpp1 = ((againstAlliance1WLT.Win + (againstAlliance1WLT.Tie * .5)) / (againstAlliance1WLT.Win + againstAlliance1WLT.Loss + againstAlliance1WLT.Tie)) * 100;
 		header_AgainstAlliance1.data[0].value.push(`Total Matches: ${againstAlliance1WLT.Win + againstAlliance1WLT.Loss + againstAlliance1WLT.Tie}`);
-		header_AgainstAlliance1.data[0].value.push(`W-L-T: ${againstAlliance1WLT.Win}-${againstAlliance1WLT.Loss}-${againstAlliance1WLT.Tie}`);
+		header_AgainstAlliance1.data[0].value.push(`W-L-T: ${againstAlliance1WLT.Win}-${againstAlliance1WLT.Loss}-${againstAlliance1WLT.Tie} (${winPercentOpp1.toPrecision(4)}% wins)`);
 
 		//#endregion
 
 		//#region Against Opponent 2
 
+		const winPercentOpp2 = ((againstAlliance2WLT.Win + (againstAlliance2WLT.Tie * .5)) / (againstAlliance2WLT.Win + againstAlliance2WLT.Loss + againstAlliance2WLT.Tie)) * 100;
 		header_AgainstAlliance2.data[0].value.push(`Total Matches: ${againstAlliance2WLT.Win + againstAlliance2WLT.Loss + againstAlliance2WLT.Tie}`);
-		header_AgainstAlliance2.data[0].value.push(`W-L-T: ${againstAlliance2WLT.Win}-${againstAlliance2WLT.Loss}-${againstAlliance2WLT.Tie}`);
+		header_AgainstAlliance2.data[0].value.push(`W-L-T: ${againstAlliance2WLT.Win}-${againstAlliance2WLT.Loss}-${againstAlliance2WLT.Tie} (${winPercentOpp2.toPrecision(4)}% wins)`);
 
 		//#endregion
 
 		//#region Against Opponent 3
 
-		if (blue.length === 3) {
+		if (red.length === 3) {
+			const winPercentOpp3 = ((againstAlliance3WLT.Win + (againstAlliance3WLT.Tie * .5)) / (againstAlliance3WLT.Win + againstAlliance3WLT.Loss + againstAlliance3WLT.Tie)) * 100;
 			header_AgainstAlliance3.data[0].value.push(`Total Matches: ${againstAlliance3WLT.Win + againstAlliance3WLT.Loss + againstAlliance3WLT.Tie}`);
-			header_AgainstAlliance3.data[0].value.push(`W-L-T: ${againstAlliance3WLT.Win}-${againstAlliance3WLT.Loss}-${againstAlliance3WLT.Tie}`);
+			header_AgainstAlliance3.data[0].value.push(`W-L-T: ${againstAlliance3WLT.Win}-${againstAlliance3WLT.Loss}-${againstAlliance3WLT.Tie} (${winPercentOpp3.toPrecision(4)}% wins)`);
 		}
 
 		//#endregion
