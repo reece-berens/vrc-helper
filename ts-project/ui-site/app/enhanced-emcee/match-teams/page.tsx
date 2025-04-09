@@ -323,15 +323,28 @@ const EnhancedEmcee_MatchTeams: React.FC<{}> = () => {
 				</Grid>
 			</Grid>
 			<TabsStyling variant="scrollable" value={teamTabSelected} onChange={onChangeTeamTab}>
+				<SelectedTabStyling key="teamIDs" color="blue" label="Team IDs" />
 				{displayMatch.matchInfo.alliances.map((alliance, a_i) => {
 					return alliance.teams.map((team, t_i) => (
 						<SelectedTabStyling key={`${a_i}-${t_i}`} color={a_i === 0 ? "red" : "blue"} label={team.number} />
 					));
 				})}
 			</TabsStyling>
+			{teamTabSelected === 0 && (
+				<div style={{marginBottom: "60px"}}>
+					{displayMatch.matchInfo.alliances.map((alliance, a_i) => {
+						return alliance.teams.map((team, t_i) => (
+							<div key={(a_i * alliance.teams.length) + t_i} style={{marginTop: "20px"}}>
+								<Typography style={{color: a_i === 0 ? "#dc004e" : "#1976d2"}} variant="h5">{displayData[team.number]?.HeaderLine || ""}</Typography>
+								<Typography variant="subtitle1">{displayData[team.number]?.SubHeaderLine || ""}</Typography>
+							</div>
+						))
+					})}
+				</div>
+			)}
 			{displayMatch.matchInfo.alliances.map((alliance, a_i) => {
 				return alliance.teams.map((team, t_i) => (
-					<TeamDisplayData key={(a_i * alliance.teams.length) + t_i} MatchData={displayData} MyTeamNumber={team.number} SelectedTabIndex={teamTabSelected} ThisTabIndex={(a_i * alliance.teams.length) + t_i} />
+					<TeamDisplayData key={(a_i * alliance.teams.length) + t_i} MatchData={displayData} MyTeamNumber={team.number} SelectedTabIndex={teamTabSelected} ThisTabIndex={(a_i * alliance.teams.length) + t_i + 1} />
 				))
 			})}
 		</div>
@@ -359,7 +372,6 @@ const TeamDisplayData: React.FC<TeamDisplayDataProps> = (props) => {
 					<>
 						<Typography variant="h5">{props.MatchData[props.MyTeamNumber].HeaderLine || ""}</Typography>
 						<Typography variant="subtitle1">{props.MatchData[props.MyTeamNumber].SubHeaderLine || ""}</Typography>
-
 						{
 							props.MatchData[props.MyTeamNumber].DataHeaders.map((x, x_i) => (
 								<Accordion key={x_i} expanded={openAccordion === x.name} onChange={() => _openAccordion(old => x.name === old ? "" : x.name)}>
@@ -385,7 +397,6 @@ const TeamDisplayData: React.FC<TeamDisplayDataProps> = (props) => {
 										</Grid>
 									</AccordionDetails>
 								</Accordion>
-							
 							))
 						}
 					</>
